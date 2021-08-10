@@ -413,10 +413,8 @@ export function mojangLogin(username, password, redirect = true) {
       if (!data?.selectedProfile?.id) {
         throw new Error("It looks like you didn't buy the game.");
       }
-      const skinBase64 = await mojangPlayerSkinService(data.selectedProfile.id);
-      if (skinBase64) {
-        data.skin = skinBase64;
-      }
+      data.skin = await mojangPlayerSkinService(data.selectedProfile.id);
+
       dispatch(updateAccount(data.selectedProfile.id, data));
       dispatch(updateCurrentAccountId(data.selectedProfile.id));
 
@@ -458,12 +456,7 @@ export function elyByLogin(username, password, redirect = true) {
       if (!data?.selectedProfile?.name) {
         throw new Error("It looks like you didn't create an account.");
       }
-      const skinBase64 = await elyByPlayerSkinService(
-        data.selectedProfile.name
-      );
-      if (skinBase64) {
-        data.skin = skinBase64;
-      }
+      data.skin = await elyByPlayerSkinService(data.selectedProfile.name);
       dispatch(updateAccount(data.selectedProfile.id, data));
       dispatch(updateCurrentAccountId(data.selectedProfile.id));
 
@@ -506,10 +499,7 @@ export function localLogin(username, redirect = true) {
         data.selectedProfile = playerProfile.data;
       } // else todo set random valid mojang uuid
 
-      const skinBase64 = await mojangPlayerSkinService(data.selectedProfile.id);
-      if (skinBase64) {
-        data.skin = skinBase64;
-      }
+      data.skin = await mojangPlayerSkinService(data.selectedProfile.id);
       dispatch(updateAccount(data.selectedProfile.id, data));
       dispatch(updateCurrentAccountId(data.selectedProfile.id));
 
@@ -610,8 +600,6 @@ export function loginWithOAuthAccessToken(redirect = true) {
           throw new Error('Error occurred while logging in Minecraft.');
         }
 
-        const skinBase64 = await mojangPlayerSkinService(selectedProfile.id);
-
         const account = {
           accountType: ACCOUNT_MICROSOFT,
           accessToken: mcRefreshedAccessToken,
@@ -628,7 +616,7 @@ export function loginWithOAuthAccessToken(redirect = true) {
             id: selectedProfile.id,
             name: selectedProfile.name
           },
-          skin: skinBase64 || undefined,
+          skin: await mojangPlayerSkinService(selectedProfile.id),
           user: {
             username: mcUserName
           }
@@ -647,15 +635,12 @@ export function loginWithOAuthAccessToken(redirect = true) {
     } else {
       // Only reload skin
       try {
-        const skinBase64 = await mojangPlayerSkinService(selectedProfile.id);
-        if (skinBase64) {
-          dispatch(
-            updateAccount(selectedProfile.id, {
-              ...currentAccount,
-              skin: skinBase64
-            })
-          );
-        }
+        dispatch(
+          updateAccount(selectedProfile.id, {
+            ...currentAccount,
+            skin: await mojangPlayerSkinService(selectedProfile.id)
+          })
+        );
         if (redirect) {
           dispatch(push('/home'));
         }
@@ -676,30 +661,24 @@ export function loginWithAccessToken(redirect = true) {
       if (state === ACCOUNT_MOJANG) {
         await mcValidate(accessToken, clientToken);
         try {
-          const skinBase64 = await mojangPlayerSkinService(selectedProfile.id);
-          if (skinBase64) {
-            dispatch(
-              updateAccount(selectedProfile.id, {
-                ...currentAccount,
-                skin: skinBase64
-              })
-            );
-          }
+          dispatch(
+            updateAccount(selectedProfile.id, {
+              ...currentAccount,
+              skin: await mojangPlayerSkinService(selectedProfile.id)
+            })
+          );
         } catch (err) {
           console.warn('Could not fetch skin');
         }
       } else if (state === ACCOUNT_ELYBY) {
         await mcElyByValidate(accessToken, clientToken);
         try {
-          const skinBase64 = await elyByPlayerSkinService(selectedProfile.name);
-          if (skinBase64) {
-            dispatch(
-              updateAccount(selectedProfile.id, {
-                ...currentAccount,
-                skin: skinBase64
-              })
-            );
-          }
+          dispatch(
+            updateAccount(selectedProfile.id, {
+              ...currentAccount,
+              skin: await elyByPlayerSkinService(selectedProfile.name)
+            })
+          );
         } catch (err) {
           console.warn('Could not fetch skin');
         }
@@ -712,22 +691,14 @@ export function loginWithAccessToken(redirect = true) {
         try {
           if (state === ACCOUNT_MOJANG) {
             const { data } = await mcRefresh(accessToken, clientToken);
-            const skinBase64 = await mojangPlayerSkinService(
-              data.selectedProfile.id
-            );
-            if (skinBase64) {
-              data.skin = skinBase64;
-            }
+            data.skin = await mojangPlayerSkinService(data.selectedProfile.id);
+
             dispatch(updateAccount(data.selectedProfile.id, data));
             dispatch(updateCurrentAccountId(data.selectedProfile.id));
           } else if (state === ACCOUNT_ELYBY) {
             const { data } = await mcElyByRefresh(accessToken, clientToken);
-            const skinBase64 = await elyByPlayerSkinService(
-              data.selectedProfile.name
-            );
-            if (skinBase64) {
-              data.skin = skinBase64;
-            }
+            data.skin = await elyByPlayerSkinService(data.selectedProfile.name);
+
             dispatch(updateAccount(data.selectedProfile.id, data));
             dispatch(updateCurrentAccountId(data.selectedProfile.id));
           }
@@ -757,15 +728,12 @@ export function loginLocalWithoutAccessToken() {
     const currentAccount = _getCurrentAccount(state);
     const { selectedProfile } = currentAccount;
     try {
-      const skinBase64 = await mojangPlayerSkinService(selectedProfile.id);
-      if (skinBase64) {
-        dispatch(
-          updateAccount(selectedProfile.id, {
-            ...currentAccount,
-            skin: skinBase64
-          })
-        );
-      }
+      dispatch(
+        updateAccount(selectedProfile.id, {
+          ...currentAccount,
+          skin: await mojangPlayerSkinService(selectedProfile.id)
+        })
+      );
     } catch (err) {
       console.warn('Could not fetch skin');
     }
@@ -795,10 +763,7 @@ export function loginThroughNativeLauncher() {
 
       const { data } = await mcRefresh(accessToken, mojangClientToken);
       data.accountType = ACCOUNT_MOJANG;
-      const skinBase64 = await mojangPlayerSkinService(data.selectedProfile.id);
-      if (skinBase64) {
-        data.skin = skinBase64;
-      }
+      data.skin = await mojangPlayerSkinService(data.selectedProfile.id);
 
       // We need to update the accessToken in launcher_accounts.json
       vnlJson.accounts[activeAccountLocalId].accessToken = data.accessToken;
@@ -923,8 +888,6 @@ export function loginOAuth(redirect = true) {
         throw new Error('Error occurred while fetching Minecraft profile.');
       }
 
-      const skinBase64 = await mojangPlayerSkinService(mcUserId);
-
       const account = {
         accountType: ACCOUNT_MICROSOFT,
         accessToken: mcAccessToken,
@@ -941,7 +904,7 @@ export function loginOAuth(redirect = true) {
           id: mcUserId,
           name: mcUserName
         },
-        skin: skinBase64 || undefined,
+        skin: await mojangPlayerSkinService(mcUserId),
         user: {
           username: mcUserName
         }

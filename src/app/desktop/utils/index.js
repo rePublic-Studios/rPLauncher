@@ -805,25 +805,33 @@ const getBase64 = url => {
 
 export const mojangPlayerSkinService = async uuid => {
   let skin = defaultskin;
-  const playerSkin = await mojangSessionServerUrl('profile', uuid);
-  if (playerSkin.status === 204) return skin;
-  const { data } = playerSkin;
-  const base64 = data.properties[0].value;
-  const decoded = JSON.parse(Buffer.from(base64, 'base64').toString());
+  try {
+    const playerSkin = await mojangSessionServerUrl('profile', uuid);
+    if (playerSkin.status === 204) return skin;
+    const { data } = playerSkin;
+    const base64 = data.properties[0].value;
+    const decoded = JSON.parse(Buffer.from(base64, 'base64').toString());
 
-  if (decoded?.textures?.SKIN?.url)
-    skin = await getBase64(decoded?.textures?.SKIN?.url);
+    if (decoded?.textures?.SKIN?.url)
+      skin = await getBase64(decoded?.textures?.SKIN?.url);
+  } catch (error) {
+    console.error(error);
+  }
   return skin;
 };
 
 export const elyByPlayerSkinService = async name => {
   let skin = defaultskin;
-  const playerTexture = await elyBySkinSystemUrl('textures', name);
-  if (playerTexture.status === 204) return skin;
-  const { data } = playerTexture;
+  try {
+    const playerTexture = await elyBySkinSystemUrl('textures', name);
+    if (playerTexture.status === 204) return skin;
+    const { data } = playerTexture;
 
-  if (data?.SKIN?.url) {
-    skin = await getBase64(data?.SKIN?.url);
+    if (data?.SKIN?.url) {
+      skin = await getBase64(data?.SKIN?.url);
+    }
+  } catch (error) {
+    console.error(error);
   }
   return skin;
 };
