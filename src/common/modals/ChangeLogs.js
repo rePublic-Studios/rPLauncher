@@ -1,14 +1,31 @@
 /* eslint-disable react/no-unescaped-entities */
 import React, { memo, useState, useEffect } from 'react';
+import axios from 'axios';
 import styled from 'styled-components';
 import { ipcRenderer } from 'electron';
 import Modal from '../components/Modal';
 
 const ChangeLogs = () => {
   const [version, setVersion] = useState(null);
+  const [news, setNews] = useState(null);
 
   useEffect(() => {
-    ipcRenderer.invoke('getAppVersion').then(setVersion).catch(console.error);
+    ipcRenderer
+      .invoke('getAppVersion')
+      .then(ver => {
+        setVersion(ver);
+
+        (async () => {
+          const releaseData = await axios.get(
+            `https://api.github.com/repos/rePublic-Studios/rPLauncher/releases/tags/v${ver}`
+          );
+          if (releaseData?.data)
+            setNews(releaseData?.data?.body?.replace('- ', '').split('\n'));
+        })();
+
+        return true;
+      })
+      .catch(console.error);
   }, []);
 
   return (
@@ -26,39 +43,16 @@ const ChangeLogs = () => {
               color: ${props => props.theme.palette.colors.green};
             `}
           >
-            <span>New Features</span>
+            <span>New Features / Fixxes</span>
           </SectionTitle>
           <div>
             <ul>
-              <li>Added buttons to discordrpc</li>
-              <li>Better image sizes for logos</li>
-              <li>Launch instance from cli</li>
-              <li>Fixxed Accountmanager to select offline accounts </li>
-              <li>Fixxed Autologin of offline Accounts on restart </li>
-              <li>Added Default Skin, to fix skinerrors </li>
-              <li>Better Servicemanagement for API's</li>
-              <li>Fixxed Sliders for new users</li>
-              <li>Added Accounttype in settings</li>
-              <li>Some minimal changes</li>
-              <li />
-              <li>Prepare for a own repo</li>
+              {news?.map(text => (
+                <li>{text}</li>
+              ))}
             </ul>
           </div>
         </Section>
-        {/* <Section>
-          <SectionTitle
-            css={`
-              color: ${props => props.theme.palette.colors.red};
-            `}
-          >
-            <span>Bug Fixes</span>
-          </SectionTitle>
-          <div>
-            <ul>
-              <li>Forked and modified to cracked</li>
-            </ul>
-          </div>
-        </Section> */}
       </Container>
     </Modal>
   );
