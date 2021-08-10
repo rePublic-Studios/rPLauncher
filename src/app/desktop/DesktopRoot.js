@@ -16,7 +16,7 @@ import {
   checkClientToken,
   updateUserData,
   loginWithOAuthAccessToken,
-  localLogin
+  loginLocalWithoutAccessToken
 } from '../../common/reducers/actions';
 import {
   load,
@@ -121,12 +121,13 @@ function DesktopRoot({ store }) {
         load(
           features.mcAuthentication,
           dispatch(() => {
+            console.log(currentAccount);
             switch (currentAccount.accountType) {
               case ACCOUNT_MICROSOFT:
                 loginWithOAuthAccessToken();
                 break;
               case ACCOUNT_LOCAL:
-                localLogin();
+                loginLocalWithoutAccessToken();
                 break;
               default:
                 loginWithAccessToken();

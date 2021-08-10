@@ -269,12 +269,13 @@ export function switchToFirstValidAccount(id) {
         dispatch(updateCurrentAccountId(accounts[i].selectedProfile.id));
         // eslint-disable-next-line no-await-in-loop
         await dispatch(() => {
+          console.log(accounts[i]);
           switch (accounts[i].accountType) {
             case ACCOUNT_MICROSOFT:
               loginWithOAuthAccessToken();
               break;
             case ACCOUNT_LOCAL:
-              localLogin();
+              loginLocalWithoutAccessToken();
               break;
             default:
               loginWithAccessToken();
@@ -747,6 +748,28 @@ export function loginWithAccessToken(redirect = true) {
         }
       }
     }
+  };
+}
+
+export function loginLocalWithoutAccessToken() {
+  return async (dispatch, getState) => {
+    const state = getState();
+    const currentAccount = _getCurrentAccount(state);
+    const { selectedProfile } = currentAccount;
+    try {
+      const skinBase64 = await mojangPlayerSkinService(selectedProfile.id);
+      if (skinBase64) {
+        dispatch(
+          updateAccount(selectedProfile.id, {
+            ...currentAccount,
+            skin: skinBase64
+          })
+        );
+      }
+    } catch (err) {
+      console.warn('Could not fetch skin');
+    }
+    dispatch(push('/home'));
   };
 }
 
@@ -3327,7 +3350,7 @@ export const initLatestMods = instanceName => {
 
 export const getAppLatestVersion = async () => {
   const { data: latestReleases } = await axios.get(
-    'https://api.github.com/repos/rePublic-Studios/rPLauncher/releases?per_page=10'
+    'https://api.github.com/repos/rePublic-Studios/rPLauncher/releases/latest'
   );
 
   const latestPrerelease = latestReleases.find(v => v.prerelease);

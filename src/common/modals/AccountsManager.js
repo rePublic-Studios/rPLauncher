@@ -13,7 +13,7 @@ import {
   updateAccount,
   removeAccount,
   loginWithOAuthAccessToken,
-  localLogin
+  loginLocalWithoutAccessToken
 } from '../reducers/actions';
 import { load } from '../reducers/loading/actions';
 import features from '../reducers/loading/features';
@@ -74,7 +74,7 @@ const ProfileSettings = () => {
                               loginWithOAuthAccessToken(false);
                               break;
                             case ACCOUNT_LOCAL:
-                              localLogin(false);
+                              loginLocalWithoutAccessToken(false);
                               break;
                             default:
                               loginWithAccessToken(false);
