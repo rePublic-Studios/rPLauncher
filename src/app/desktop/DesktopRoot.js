@@ -121,7 +121,6 @@ function DesktopRoot({ store }) {
         load(
           features.mcAuthentication,
           dispatch(() => {
-            console.log(currentAccount);
             switch (currentAccount.accountType) {
               case ACCOUNT_MICROSOFT:
                 loginWithOAuthAccessToken();

@@ -269,7 +269,6 @@ export function switchToFirstValidAccount(id) {
         dispatch(updateCurrentAccountId(accounts[i].selectedProfile.id));
         // eslint-disable-next-line no-await-in-loop
         await dispatch(() => {
-          console.log(accounts[i]);
           switch (accounts[i].accountType) {
             case ACCOUNT_MICROSOFT:
               loginWithOAuthAccessToken();
