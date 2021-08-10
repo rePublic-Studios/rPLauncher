@@ -271,13 +271,13 @@ export function switchToFirstValidAccount(id) {
         await dispatch(() => {
           switch (accounts[i].accountType) {
             case ACCOUNT_MICROSOFT:
-              loginWithOAuthAccessToken();
+              dispatch(loginWithOAuthAccessToken());
               break;
             case ACCOUNT_LOCAL:
-              loginLocalWithoutAccessToken();
+              dispatch(loginLocalWithoutAccessToken());
               break;
             default:
-              loginWithAccessToken();
+              dispatch(loginWithAccessToken());
               break;
           }
         });
@@ -752,6 +752,7 @@ export function loginWithAccessToken(redirect = true) {
 
 export function loginLocalWithoutAccessToken() {
   return async (dispatch, getState) => {
+    console.log('lol');
     const state = getState();
     const currentAccount = _getCurrentAccount(state);
     const { selectedProfile } = currentAccount;

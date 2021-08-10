@@ -71,13 +71,13 @@ const ProfileSettings = () => {
                         dispatch(() => {
                           switch (account.accountType) {
                             case ACCOUNT_MICROSOFT:
-                              loginWithOAuthAccessToken(false);
+                              dispatch(loginWithOAuthAccessToken(false));
                               break;
                             case ACCOUNT_LOCAL:
-                              loginLocalWithoutAccessToken(false);
+                              dispatch(loginLocalWithoutAccessToken(false));
                               break;
                             default:
-                              loginWithAccessToken(false);
+                              dispatch(loginWithAccessToken(false));
                               break;
                           }
                         })

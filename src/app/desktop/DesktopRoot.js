@@ -113,7 +113,7 @@ function DesktopRoot({ store }) {
       });
     }
 
-    if (process.env.NODE_ENV === 'development' && currentAccount) {
+    if (process.env.NODE_ENV !== 'development' && currentAccount) {
       dispatch(received(features.mcAuthentication));
       dispatch(push('/home'));
     } else if (currentAccount) {
@@ -123,13 +123,13 @@ function DesktopRoot({ store }) {
           dispatch(() => {
             switch (currentAccount.accountType) {
               case ACCOUNT_MICROSOFT:
-                loginWithOAuthAccessToken();
+                dispatch(loginWithOAuthAccessToken());
                 break;
               case ACCOUNT_LOCAL:
-                loginLocalWithoutAccessToken();
+                dispatch(loginLocalWithoutAccessToken());
                 break;
               default:
-                loginWithAccessToken();
+                dispatch(loginWithAccessToken());
                 break;
             }
           })
