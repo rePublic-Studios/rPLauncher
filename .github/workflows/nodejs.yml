@@ -1,0 +1,99 @@
+name: rPLauncher Next CI
+
+on:
+  push:
+    branches:
+      - master
+      - releases
+      - native-refactor
+  pull_request:
+    branches:
+      - master
+      - releases
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+
+    steps:
+      - name: Context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: Use Node.js 14.16.0
+        uses: actions/setup-node@v1
+        with:
+          node-version: '14.16.0'
+
+      - name: npm run install
+        run: |
+          npm i
+      - name: npm run lint
+        run: |
+          npm run lint
+      - name: npm run release for windows
+        if: matrix.os == 'windows-latest' && github.event_name == 'push'
+        env:
+          CI: ''
+          TRAVIS_TAG: ''
+          APPVEYOR_REPO_TAG_NAME: ''
+          CIRCLE_TAG: ''
+          BITRISE_GIT_TAG: ''
+          CI_BUILD_TAG: ''
+          RELEASE_TESTING: false
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+        run: |
+          npm run release
+      - name: npm run release for mac and linux
+        if: matrix.os != 'windows-latest' || github.event_name != 'push'
+        env:
+          CI: ''
+          TRAVIS_TAG: ''
+          APPVEYOR_REPO_TAG_NAME: ''
+          CIRCLE_TAG: ''
+          BITRISE_GIT_TAG: ''
+          CI_BUILD_TAG: ''
+          RELEASE_TESTING: false
+        run: |
+          npm run release
+      - name: upload release to gh releases
+        if: github.event_name == 'push' && github.ref == 'refs/heads/releases'
+        env:
+          GH_ACCESS_TOKEN_RELEASES: ${{ secrets.GH_ACCESS_TOKEN_RELEASES }}
+        run: |
+          npm run upload
+      - uses: actions/upload-artifact@v1
+        if: matrix.os == 'macos-latest'
+        with:
+          name: MacOs Release
+          path: deploy
+
+      - uses: actions/upload-artifact@v1
+        if: matrix.os == 'windows-latest'
+        with:
+          name: Windows Release
+          path: deploy
+
+      - uses: actions/upload-artifact@v1
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          name: Linux Release
+          path: deploy
+
+      - uses: actions/setup-ruby@v1
+      - name: Send Webhook Notification
+        if: matrix.os == 'macos-latest'
+        env:
+          JOB_STATUS: ${{ job.status }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          git clone https://github.com/gorilla-devs/github-actions-discord-webhook.git webhook
+          bash webhook/send.sh $JOB_STATUS $WEBHOOK_URL
+        shell: bash
