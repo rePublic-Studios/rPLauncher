@@ -1,4 +1,5 @@
-![rePublicLogoHori](https://user-images.githubusercontent.com/31509082/128656786-abac9d2a-d511-4929-a5af-0cab060dd9c4.png)
+![rePublicLogoHori](https://user-images.githubusercontent.com/31509082/128804329-25d8aaa7-b530-45cc-b7a9-8655669340bb.png)
+
 
 ## You can join us here:
 
