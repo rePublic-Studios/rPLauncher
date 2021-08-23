@@ -2090,25 +2090,48 @@ export function downloadInstance(instanceName) {
     const { soundCategoryAmbient } = state.settings;
     const { soundCategoryVoice } = state.settings;
     const { vsync } = state.settings;
+    const { muteAllSounds } = state.settings;
+    let data;
 
-    const data =
-      `fullscreen:${fullScreen}\n` +
-      `autoJump:${autoJump}\n` +
-      `guiScale:${guiScale}\n` +
-      `fov:${fov}\n` +
-      `maxFps:${fps}\n` +
-      `renderDistance:${renderDistance}\n` +
-      `soundCategory_master:${soundCategoryMaster}\n` +
-      `soundCategory_music:${soundCategoryMusik}\n` +
-      `soundCategory_record:${soundCategoryJukebox}\n` +
-      `soundCategory_weather:${soundCategoryWeather}\n` +
-      `soundCategory_blocks:${soundCategoryBlocks}\n` +
-      `soundCategory_hostile:${soundCategoryHostile}\n` +
-      `soundCategory_neutral:${soundCategoryNeutral}\n` +
-      `soundCategory_player:${soundCategoryPlayer}\n` +
-      `soundCategory_ambient:${soundCategoryAmbient}\n` +
-      `soundCategory_voice:${soundCategoryVoice}\n` +
-      `enableVsync:${vsync}`;
+    if (!muteAllSounds) {
+      data =
+        `fullscreen:${fullScreen}\n` +
+        `autoJump:${autoJump}\n` +
+        `guiScale:${guiScale}\n` +
+        `fov:${fov}\n` +
+        `maxFps:${fps}\n` +
+        `renderDistance:${renderDistance}\n` +
+        `soundCategory_master:${soundCategoryMaster}\n` +
+        `soundCategory_music:${soundCategoryMusik}\n` +
+        `soundCategory_record:${soundCategoryJukebox}\n` +
+        `soundCategory_weather:${soundCategoryWeather}\n` +
+        `soundCategory_blocks:${soundCategoryBlocks}\n` +
+        `soundCategory_hostile:${soundCategoryHostile}\n` +
+        `soundCategory_neutral:${soundCategoryNeutral}\n` +
+        `soundCategory_player:${soundCategoryPlayer}\n` +
+        `soundCategory_ambient:${soundCategoryAmbient}\n` +
+        `soundCategory_voice:${soundCategoryVoice}\n` +
+        `enableVsync:${vsync}`;
+    } else {
+      data =
+        `fullscreen:${fullScreen}\n` +
+        `autoJump:${autoJump}\n` +
+        `guiScale:${guiScale}\n` +
+        `fov:${fov}\n` +
+        `maxFps:${fps}\n` +
+        `renderDistance:${renderDistance}\n` +
+        `soundCategory_master:0\n` +
+        `soundCategory_music:0\n` +
+        `soundCategory_record:0\n` +
+        `soundCategory_weather:0\n` +
+        `soundCategory_blocks:0\n` +
+        `soundCategory_hostile:0\n` +
+        `soundCategory_neutral:0\n` +
+        `soundCategory_player:0\n` +
+        `soundCategory_ambient:0\n` +
+        `soundCategory_voice:0\n` +
+        `enableVsync:${vsync}`;
+    }
 
     try {
       if (!fss.existsSync(filePath)) {

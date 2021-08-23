@@ -269,3 +269,12 @@ export function updateVSync(val) {
     });
   };
 }
+
+export function updateMuteAllSounds(val) {
+  return dispatch => {
+    dispatch({
+      type: ActionTypes.UPDATE_MUTE_ALL_SOUNDS,
+      val
+    });
+  };
+}

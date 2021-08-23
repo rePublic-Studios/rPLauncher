@@ -1,6 +1,5 @@
 ![rePublicLogoHori](https://user-images.githubusercontent.com/31509082/128804329-25d8aaa7-b530-45cc-b7a9-8655669340bb.png)
 
-
 ## You can join us here:
 
 [Discord](https://discord.gg/tzebdd9AsM)

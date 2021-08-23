@@ -68,7 +68,7 @@ function getMarksFOV() {
 function getMarksFPS() {
   const totalMarks = {};
   totalMarks[30] = 'Minimum';
-  totalMarks[90] = 'Default';
+  totalMarks[60] = 'Default';
   totalMarks[260] = 'Unlimited';
 
   return totalMarks;

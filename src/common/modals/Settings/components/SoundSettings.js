@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Slider, InputNumber, Row, Col } from 'antd';
+import { Slider, InputNumber, Row, Col, Switch } from 'antd';
 import styled from 'styled-components';
 import {
   updateSoundCategoryMaster,
@@ -12,7 +12,8 @@ import {
   updateSoundCategoryNeutral,
   updateSoundCategoryPlayer,
   updateSoundCategoryAmbient,
-  updateSoundCategoryVoice
+  updateSoundCategoryVoice,
+  updateMuteAllSounds
 } from '../../../reducers/settings/actions';
 
 const SoundSettings = styled.div`
@@ -48,6 +49,18 @@ const Hr = styled.div`
   height: 35px;
 `;
 
+const MuteAllSelection = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  height: 40px;
+  p {
+    text-align: left;
+    color: ${props => props.theme.palette.text.third};
+  }
+`;
+
 const SoundSetting = () => {
   const dispatch = useDispatch();
 
@@ -81,10 +94,36 @@ const SoundSetting = () => {
   const soundCategoryVoice = useSelector(
     state => state.settings.soundCategoryVoice
   );
+  const muteAllSounds = useSelector(state => state.settings.muteAllSounds);
 
   return (
     <SoundSettings>
       <MainTitle>Sound Settings</MainTitle>
+
+      <Hr />
+
+      <Title
+        css={`
+          margin-top: 0px;
+        `}
+      >
+        Mute all sounds &nbsp;
+      </Title>
+      <MuteAllSelection>
+        <p
+          css={`
+                  width: 350px;y
+                  `}
+        >
+          Mute/Unmute all sounds
+        </p>
+        <Switch
+          onChange={e => {
+            dispatch(updateMuteAllSounds(e));
+          }}
+          checked={muteAllSounds}
+        />
+      </MuteAllSelection>
 
       <Hr />
 
@@ -123,6 +162,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryMaster * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -134,6 +174,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryMaster(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>
@@ -176,6 +217,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryMusik * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -187,6 +229,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryMusik(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>
@@ -229,6 +272,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryJukebox * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -240,6 +284,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryJukebox(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>
@@ -282,6 +327,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryWeather * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -293,6 +339,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryWeather(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>
@@ -335,6 +382,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryBlocks * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -346,6 +394,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryBlocks(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>
@@ -388,6 +437,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryHostile * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -399,6 +449,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryHostile(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>
@@ -441,6 +492,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryNeutral * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -452,6 +504,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryNeutral(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>
@@ -494,6 +547,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryPlayer * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -505,6 +559,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryPlayer(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>
@@ -547,6 +602,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryAmbient * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -558,6 +614,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryAmbient(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>
@@ -600,6 +657,7 @@ const SoundSetting = () => {
               max={100}
               step={1}
               value={soundCategoryVoice * 100}
+              disabled={muteAllSounds}
             />
           </Col>
           <Col span={1}>
@@ -611,6 +669,7 @@ const SoundSetting = () => {
               onChange={e => {
                 dispatch(updateSoundCategoryVoice(e / 100.0));
               }}
+              disabled={muteAllSounds}
             />
           </Col>
         </Row>

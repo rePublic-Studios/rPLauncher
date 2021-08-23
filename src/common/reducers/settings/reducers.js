@@ -128,7 +128,7 @@ function java(
   }
 }
 
-function fullscreen(state = true, action) {
+function fullscreen(state = false, action) {
   switch (action.type) {
     case ActionTypes.UPDATE_FULLSCREEN:
       return action.val;
@@ -281,6 +281,15 @@ function vsync(state = false, action) {
   }
 }
 
+function muteAllSounds(state = false, action) {
+  switch (action.type) {
+    case ActionTypes.UPDATE_MUTE_ALL_SOUNDS:
+      return action.val;
+    default:
+      return state;
+  }
+}
+
 export default combineReducers({
   sounds,
   releaseChannel,
@@ -309,5 +318,6 @@ export default combineReducers({
   soundCategoryPlayer,
   soundCategoryAmbient,
   soundCategoryVoice,
-  vsync
+  vsync,
+  muteAllSounds
 });
