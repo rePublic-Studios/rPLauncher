@@ -7,7 +7,7 @@ let activity;
 const initialAppStartup = Math.floor(Date.now() / 1000);
 
 const defaultValue = {
-  details: 'Idleing in rPLauncher',
+  details: 'Idling in rPLauncher',
   startTimestamp: initialAppStartup,
   largeImageKey: 'default_big',
   largeImageText: 'rPLauncher - A Custom Minecraft Launcher',
