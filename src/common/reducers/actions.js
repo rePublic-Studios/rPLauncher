@@ -1334,6 +1334,11 @@ export function downloadForge(instanceName) {
       `${loader?.loaderVersion}.json`
     );
 
+    const mcJsonPath = path.join(
+      _getMinecraftVersionsPath(state),
+      `${loader?.mcVersion}.json`
+    );
+
     const sevenZipPath = await get7zPath();
     const pre152 = lte(coerce(loader?.mcVersion), coerce('1.5.2'));
     const pre132 = lte(coerce(loader?.mcVersion), coerce('1.3.2'));
@@ -1440,6 +1445,8 @@ export function downloadForge(instanceName) {
 
       await fse.outputJson(forgeJsonPath, forgeJson);
 
+      let skipForgeFilter = true;
+
       // Extract forge bin
       if (forgeJson.install.filePath) {
         await extractSpecificFile(forgeJson.install.filePath);
@@ -1452,7 +1459,7 @@ export function downloadForge(instanceName) {
           ),
           { overwrite: true }
         );
-      } else {
+      } else if (forgeJson.install.path) {
         // Move all files in maven
         const forgeBinPathInsideZip = path.join(
           'maven',
@@ -1480,6 +1487,9 @@ export function downloadForge(instanceName) {
         );
 
         await fse.remove(path.join(_getTempPath(state), 'maven'));
+      } else {
+        // Forge 1.17+
+        skipForgeFilter = false;
       }
 
       dispatch(
@@ -1495,8 +1505,9 @@ export function downloadForge(instanceName) {
       libraries = librariesMapper(
         libraries.filter(
           v =>
-            !v.name.includes('net.minecraftforge:forge:') &&
-            !v.name.includes('net.minecraftforge:minecraftforge:')
+            !skipForgeFilter ||
+            (!v.name.includes('net.minecraftforge:forge:') &&
+              !v.name.includes('net.minecraftforge:minecraftforge:'))
         ),
         _getLibrariesPath(state)
       );
@@ -1525,11 +1536,19 @@ export function downloadForge(instanceName) {
 
         await extractSpecificFile(path.join('data', 'client.lzma'));
 
+        const universalPath = forgeJson.install.libraries.find(v =>
+          (v.name || '').startsWith('net.minecraftforge:forge')
+        )?.name;
+
         await fse.move(
           path.join(_getTempPath(state), 'data', 'client.lzma'),
           path.join(
             _getLibrariesPath(state),
-            ...mavenToArray(forgeJson.install.path, '-clientdata', '.lzma')
+            ...mavenToArray(
+              forgeJson.install.path || universalPath,
+              '-clientdata',
+              '.lzma'
+            )
           ),
           { overwrite: true }
         );
@@ -1542,6 +1561,9 @@ export function downloadForge(instanceName) {
             `${forgeJson.install.minecraft}.jar`
           ),
           _getLibrariesPath(state),
+          expectedInstaller,
+          mcJsonPath,
+          universalPath,
           _getJavaPath(state)(javaVer),
           (d, t) => dispatch(updateDownloadProgress((d * 100) / t))
         );
@@ -2920,6 +2942,14 @@ export function launchInstance(instanceName) {
       resolution: instanceResolution
     } = _getInstance(state)(instanceName);
 
+    let discordRPCDetails = `Minecraft ${loader?.mcVersion}`;
+
+    if (loader.source && loader.sourceName) {
+      discordRPCDetails = `${loader.sourceName}`;
+    }
+
+    ipcRenderer.invoke('update-discord-rpc', discordRPCDetails);
+
     const versionGraterOrEqualThan1dot17 = gte(
       coerce(loader?.mcVersion),
       coerce('1.17')
@@ -3016,6 +3046,21 @@ export function launchInstance(instanceName) {
         if (forgeJson.version.minecraftArguments) {
           mcJson.minecraftArguments = forgeJson.version.minecraftArguments;
         } else if (forgeJson.version.arguments.game) {
+          // 1.17 check
+          if (forgeJson.version.arguments.jvm) {
+            mcJson.forge = { arguments: {} };
+            mcJson.forge.arguments.jvm = forgeJson.version.arguments.jvm.map(
+              arg => {
+                return arg
+                  .replace(/\${version_name}/g, mcJson.id)
+                  .replace(/\${library_directory}/g, _getLibrariesPath(state))
+                  .replace(
+                    /\${classpath_separator}/g,
+                    process.platform === 'win32' ? ';' : ':'
+                  );
+              }
+            );
+          }
           mcJson.arguments.game = mcJson.arguments.game.concat(
             forgeJson.version.arguments.game
           );
@@ -3060,7 +3105,7 @@ export function launchInstance(instanceName) {
       javaArguments
     );
 
-    const symLinkDirPath = path.join(userData.split('\\')[0], '_gdl');
+    const symLinkDirPath = path.join(userData.split('\\')[0], '_rpl');
 
     const replaceRegex = [
       process.platform === 'win32'
@@ -3092,7 +3137,7 @@ export function launchInstance(instanceName) {
 
     const ps = spawn(
       `"${javaPath.replace(...replaceRegex)}"`,
-      jvmArguments.map(v => v.replace(...replaceRegex)),
+      jvmArguments.map(v => v.toString().replace(...replaceRegex)),
       {
         cwd: instancePath,
         shell: true

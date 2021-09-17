@@ -3,13 +3,10 @@ name: rPLauncher Next CI
 on:
   push:
     branches:
-      - master
-      - releases
-      - native-refactor
+      - main
   pull_request:
     branches:
-      - master
-      - releases
+      - main
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -86,14 +83,3 @@ jobs:
         with:
           name: Linux Release
           path: deploy
-
-      - uses: actions/setup-ruby@v1
-      - name: Send Webhook Notification
-        if: matrix.os == 'macos-latest'
-        env:
-          JOB_STATUS: ${{ job.status }}
-          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-        run: |
-          git clone https://github.com/gorilla-devs/github-actions-discord-webhook.git webhook
-          bash webhook/send.sh $JOB_STATUS $WEBHOOK_URL
-        shell: bash
