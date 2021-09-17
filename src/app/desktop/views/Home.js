@@ -92,7 +92,7 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    extractFace(account.skin).then(setProfileImage).catch(console.error);
+    extractFace(account?.skin).then(setProfileImage).catch(console.error);
   }, [account]);
 
   return (

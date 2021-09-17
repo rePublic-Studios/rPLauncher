@@ -190,31 +190,31 @@ const ProfileSettings = () => {
                         />
                       </div>
                     )}
-                    <div
-                      css={`
-                        margin-left: 10px;
-                        font-size: 16px;
-                        cursor: pointer;
-                        transition: color 0.1s ease-in-out;
-                        &:hover {
-                          color: ${props => props.theme.palette.error.main};
-                        }
-                      `}
-                    >
-                      <FontAwesomeIcon
-                        onClick={async () => {
-                          const result = await dispatch(
-                            removeAccount(account.selectedProfile.id)
-                          );
-                          if (!result) {
-                            dispatch(closeModal());
-                          }
-                        }}
-                        icon={faTrash}
-                      />
-                    </div>
                   </div>
                 </AccountItem>
+                <div
+                  css={`
+                    margin-left: 10px;
+                    font-size: 16px;
+                    cursor: pointer;
+                    transition: color 0.1s ease-in-out;
+                    &:hover {
+                      color: ${props => props.theme.palette.error.main};
+                    }
+                  `}
+                >
+                  <FontAwesomeIcon
+                    onClick={async () => {
+                      const result = await dispatch(
+                        removeAccount(account.selectedProfile.id)
+                      );
+                      if (!result) {
+                        dispatch(closeModal());
+                      }
+                    }}
+                    icon={faTrash}
+                  />
+                </div>
               </AccountContainer>
             );
           })}
