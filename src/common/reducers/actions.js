@@ -2073,29 +2073,32 @@ export function downloadInstance(instanceName) {
     const instancePath = path.join(_getInstancesPath(state), instanceName);
     const filePath = `${instancePath}/options.txt`;
 
-    const fullScreen = state.settings.fullscreen;
-    const { autoJump } = state.settings;
-    const { guiScale } = state.settings;
-    const { fov } = state.settings;
-    const { fps } = state.settings;
-    const { renderDistance } = state.settings;
-    const { soundCategoryMaster } = state.settings;
-    const { soundCategoryMusik } = state.settings;
-    const { soundCategoryJukebox } = state.settings;
-    const { soundCategoryWeather } = state.settings;
-    const { soundCategoryBlocks } = state.settings;
-    const { soundCategoryHostile } = state.settings;
-    const { soundCategoryNeutral } = state.settings;
-    const { soundCategoryPlayer } = state.settings;
-    const { soundCategoryAmbient } = state.settings;
-    const { soundCategoryVoice } = state.settings;
-    const { vsync } = state.settings;
-    const { muteAllSounds } = state.settings;
+    const {
+      fullscreen,
+      autoJump,
+      guiScale,
+      fov,
+      fps,
+      renderDistance,
+      soundCategoryMaster,
+      soundCategoryMusik,
+      soundCategoryJukebox,
+      soundCategoryWeather,
+      soundCategoryBlocks,
+      soundCategoryHostile,
+      soundCategoryNeutral,
+      soundCategoryPlayer,
+      soundCategoryAmbient,
+      soundCategoryVoice,
+      vsync,
+      muteAllSounds
+    } = state.settings;
+
     let data;
 
     if (!muteAllSounds) {
       data =
-        `fullscreen:${fullScreen}\n` +
+        `fullscreen:${fullscreen}\n` +
         `autoJump:${autoJump}\n` +
         `guiScale:${guiScale}\n` +
         `fov:${fov}\n` +
@@ -2114,7 +2117,7 @@ export function downloadInstance(instanceName) {
         `enableVsync:${vsync}`;
     } else {
       data =
-        `fullscreen:${fullScreen}\n` +
+        `fullscreen:${fullscreen}\n` +
         `autoJump:${autoJump}\n` +
         `guiScale:${guiScale}\n` +
         `fov:${fov}\n` +

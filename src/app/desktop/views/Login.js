@@ -53,13 +53,20 @@ const LoginButton = styled(Button)`
 
 const Container = styled.div`
   height: 100%;
+  overflow: hidden;
 `;
 
 const LeftSide = styled.div`
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(17, 25, 40, 0.75);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.125);
+  margin: 15px 0 0 5px;
+
   position: relative;
   width: 300px;
   padding: 40px;
-  height: 100%;
+  height: 96%;
   transition: 0.3s ease-in-out;
   transform: translateX(
     ${({ transitionState }) =>
@@ -67,7 +74,6 @@ const LeftSide = styled.div`
         ? -300
         : 0}px
   );
-  background: ${props => props.theme.palette.secondary.main};
   & div {
     margin: 5px 0;
   }
@@ -136,7 +142,7 @@ const StyledButton = styled(Button)`
   width: 40%;
 `;
 
-const Loading = styled.div`
+/* const Loading = styled.div`
   position: absolute;
   width: 100%;
   height: 100%;
@@ -149,7 +155,7 @@ const Loading = styled.div`
   transition: 0.3s ease-in-out;
   opacity: ${({ transitionState }) =>
     transitionState === 'entering' || transitionState === 'entered' ? 1 : 0};
-`;
+`; */
 const LoginFailMessage = styled.div`
   color: ${props => props.theme.palette.colors.red};
 `;
@@ -251,6 +257,12 @@ const Login = () => {
             placeholder="Email"
             value={email}
             onChange={({ target: { value } }) => setEmail(value)}
+            css={`
+              backdrop-filter: blur(16px) saturate(180%);
+              background-color: rgba(17, 25, 40, 0.75);
+              border-radius: 12px;
+              border: 1px solid rgba(255, 255, 255, 0.125);
+            `}
           />
         </div>
         <div>
@@ -260,6 +272,12 @@ const Login = () => {
             value={password}
             onChange={({ target: { value } }) => setPassword(value)}
             onKeyDown={e => e.key === 'Enter' && authenticateMojang()}
+            css={`
+              backdrop-filter: blur(16px) saturate(180%);
+              background-color: rgba(17, 25, 40, 0.75);
+              border-radius: 12px;
+              border: 1px solid rgba(255, 255, 255, 0.125);
+            `}
           />
         </div>
         {loginFailed && (
@@ -324,6 +342,12 @@ const Login = () => {
             placeholder="Email"
             value={email}
             onChange={({ target: { value } }) => setEmail(value)}
+            css={`
+              backdrop-filter: blur(16px) saturate(180%);
+              background-color: rgba(17, 25, 40, 0.75);
+              border-radius: 12px;
+              border: 1px solid rgba(255, 255, 255, 0.125);
+            `}
           />
         </div>
         <div>
@@ -333,6 +357,12 @@ const Login = () => {
             value={password}
             onChange={({ target: { value } }) => setPassword(value)}
             onKeyDown={e => e.key === 'Enter' && authenticateElyBy()}
+            css={`
+              backdrop-filter: blur(16px) saturate(180%);
+              background-color: rgba(17, 25, 40, 0.75);
+              border-radius: 12px;
+              border: 1px solid rgba(255, 255, 255, 0.125);
+            `}
           />
         </div>
         {loginFailed && (
@@ -433,6 +463,12 @@ const Login = () => {
             value={email}
             onChange={({ target: { value } }) => setEmail(value)}
             onKeyDown={e => e.key === 'Enter' && authenticateLocal()}
+            css={`
+              backdrop-filter: blur(16px) saturate(180%);
+              background-color: rgba(17, 25, 40, 0.75);
+              border-radius: 12px;
+              border: 1px solid rgba(255, 255, 255, 0.125);
+            `}
           />
         </div>
         {loginFailed && (
@@ -487,6 +523,13 @@ const Login = () => {
   const menu = (
     <Menu
       mode="horizontal"
+      css={`
+        backdrop-filter: blur(16px) saturate(180%);
+        background-color: rgba(17, 25, 40, 0.75);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.125);
+        margin: 5px;
+      `}
       selectedKeys={[accountType]}
       overflowedIndicator={null}
     >
@@ -545,6 +588,11 @@ const Login = () => {
             <Dropdown
               overlay={menu}
               css={`
+                backdrop-filter: blur(16px) saturate(180%);
+                background-color: rgba(17, 25, 40, 0.75);
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.125);
+                margin: 5px;
                 width: 100%;
                 height: 40px;
               `}
@@ -566,7 +614,6 @@ const Login = () => {
               <source src={backgroundVideo} type="video/webm" />
             </video>
           </Background>
-          <Loading transitionState={transitionState}>Loading...</Loading>
         </Container>
       )}
     </Transition>

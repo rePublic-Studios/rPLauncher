@@ -8,7 +8,7 @@ import Settings from '../modals/Settings';
 
 const Overlay = styled.div`
   position: absolute;
-  top: ${props => props.theme.sizes.height.systemNavbar}px;
+  top: 0;
   left: 0;
   bottom: 0;
   right: 0;
@@ -21,7 +21,7 @@ const Overlay = styled.div`
 const Modal = styled.div`
   position: absolute;
   height: 100%;
-  width: 100vw;
+  width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;

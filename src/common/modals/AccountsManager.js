@@ -37,6 +37,12 @@ const ProfileSettings = () => {
         height: 70%;
         width: 400px;
         max-height: 700px;
+
+        backdrop-filter: blur(16px) saturate(180%);
+        background-color: rgba(17, 25, 40, 0.55);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.125);
+        margin: 5px;
       `}
       title="Account Manager"
     >
@@ -159,7 +165,15 @@ const ProfileSettings = () => {
           })}
         </AccountsContainer>
         <AccountContainer>
-          <AccountItem onClick={() => dispatch(openModal('AddAccount'))}>
+          <AccountItem
+            onClick={() => dispatch(openModal('AddAccount'))}
+            css={`
+              background-color: #2ea44f;
+              &:hover {
+                background-color: #207337;
+              }
+            `}
+          >
             Add Account
           </AccountItem>
         </AccountContainer>
@@ -183,7 +197,7 @@ const AccountItem = styled.div`
   align-items: center;
   position: relative;
   flex: 1;
-  justify-content: space-between;
+  justify-content: center;
   height: 40px;
   padding: 0 10px;
   color: white;
@@ -196,6 +210,7 @@ const AccountItem = styled.div`
     ${props =>
       props.active ? '' : `background: ${props.theme.palette.grey[600]};`}
   }
+  align-content: space-around;
 `;
 
 const HoverContainer = styled.div`

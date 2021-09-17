@@ -93,6 +93,10 @@ const SystemNavbar = () => {
     <TerminalButton
       css={`
         margin: 0 10px;
+        border-radius: 25px;
+        &:hover {
+          background-color: rgba(17, 25, 40, 0.85);
+          border-radius: 12px;
       `}
       onClick={openDevTools}
     >
@@ -105,10 +109,15 @@ const SystemNavbar = () => {
       areSettingsOpen={areSettingsOpen}
       css={`
         margin: 0 20px 0 10px;
+        border-radius: 25px;
         ${props =>
           props.areSettingsOpen
             ? `background: ${props.theme.palette.grey[700]};`
             : null}
+        &:hover {
+          background-color: rgba(17, 25, 40, 0.85);
+          border-radius: 12px;
+        }
       `}
       onClick={() => {
         dispatch(openModal('Settings'));
@@ -192,6 +201,11 @@ const SystemNavbar = () => {
               onClick={() => ipcRenderer.invoke('minimize-window')}
               css={`
                 -webkit-app-region: no-drag;
+                
+                border-radius: 25px;
+                &:hover {
+                background-color: rgba(17, 25, 40, 0.85);
+                border-radius: 12px;
               `}
             >
               <FontAwesomeIcon icon={faWindowMinimize} />
@@ -200,6 +214,10 @@ const SystemNavbar = () => {
               onClick={() => ipcRenderer.invoke('min-max-window')}
               css={`
                 -webkit-app-region: no-drag;
+                border-radius: 25px;
+                &:hover {
+                background-color: rgba(17, 25, 40, 0.85);
+                border-radius: 12px;
               `}
             >
               <FontAwesomeIcon
@@ -210,6 +228,10 @@ const SystemNavbar = () => {
               css={`
                 font-size: 18px;
                 -webkit-app-region: no-drag;
+                border-radius: 25px;
+                &:hover {
+                background-color: rgba(17, 25, 40, 0.85);
+                border-radius: 12px;
               `}
               onClick={quitApp}
             >
@@ -262,6 +284,7 @@ const SystemNavbar = () => {
               css={`
                 margin-top: 5px;
                 -webkit-app-region: no-drag;
+                cursor: pointer;
               `}
             >
               <Logo size={35} pointerCursor />
@@ -276,9 +299,7 @@ const SystemNavbar = () => {
 export default memo(SystemNavbar);
 
 const MainContainer = styled.div`
-  width: 100%;
   height: ${({ theme }) => theme.sizes.height.systemNavbar}px;
-  background: ${({ theme }) => theme.palette.grey[900]};
   -webkit-app-region: drag;
   display: flex;
   align-items: center;

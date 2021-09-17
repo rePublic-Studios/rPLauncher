@@ -244,14 +244,23 @@ const AddAccount = ({ username }) => {
       css={`
         height: 450px;
         width: 420px;
+        backdrop-filter: blur(16px) saturate(180%);
+        background-color: rgba(17, 25, 40, 0.55);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.125);
+        margin: 5px;
       `}
-      title=" "
+      title="Add Account"
     >
       <Dropdown
         overlay={menu}
         css={`
           width: 100%;
           height: 40px;
+          background-color: rgba(17, 25, 40, 0.55);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.125);
+          margin: 5px;
         `}
         trigger="click"
       >
@@ -277,6 +286,10 @@ const StyledButton = styled(Button)`
 
 const StyledInput = styled(Input)`
   margin-bottom: 20px;
+  background-color: rgba(17, 25, 40, 0.55);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.125);
+  margin: 5px;
 `;
 
 const LoginFailMessage = styled.div`
