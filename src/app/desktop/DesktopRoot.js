@@ -42,7 +42,7 @@ const Wrapper = styled.div`
 
 const Container = styled.div`
   position: absolute;
-  height: 99vh;
+  height: 98.5vh;
   width: 99vw;
   display: flex;
   flex-direction: column;
@@ -173,7 +173,7 @@ function DesktopRoot({ store }) {
       modals[0].modalType === 'Settings' &&
       !modals[0].unmounting
     ) {
-      setContentStyle({ transform: 'scale(0.4)' });
+      setContentStyle({ transform: 'scale(1)' });
     } else {
       setContentStyle({ transform: 'scale(1)' });
     }
