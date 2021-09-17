@@ -116,7 +116,6 @@ export default function Settings() {
   return (
     <Modal
       css={`
-
         backdrop-filter: blur(16px) saturate(180%);
         height: 90%;
         width: 95%;
@@ -124,7 +123,6 @@ export default function Settings() {
         border-radius: 12px;
         border: 1px solid rgba(255, 255, 255, 0.125);
         top: 8%;
-        
       `}
       header="false"
     >

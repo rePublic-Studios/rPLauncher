@@ -78,7 +78,6 @@ const SectionTitle = styled.h2`
   text-align: center;
   border-bottom: 1px solid;
   margin: 0px 0 20px;
-
 `;
 
 const Section = styled.div`
