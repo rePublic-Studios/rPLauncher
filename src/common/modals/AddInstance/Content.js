@@ -83,7 +83,7 @@ const Content = ({
                   defaultValue={page}
                   onChange={e => setPage(e.target.value)}
                 >
-                  <Radio.Button value={0}>
+                  <Radio.Button value={0} >
                     <img
                       src={minecraftIcon}
                       width="22px"

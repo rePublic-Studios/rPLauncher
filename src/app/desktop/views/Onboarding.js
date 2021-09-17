@@ -68,6 +68,11 @@ const Home = () => {
           flex-direction: column;
           justify-content: center;
           align-items: center;
+          backdrop-filter: blur(16px) saturate(180%);
+          background-color: rgba(17, 25, 40, 0.15);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.125);
+          margin: 5px;
         `}
       >
         <div
@@ -91,6 +96,11 @@ const Home = () => {
           flex-direction: column;
           justify-content: center;
           align-items: center;
+          backdrop-filter: blur(16px) saturate(180%);
+          background-color: rgba(17, 25, 40, 0.15);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.125);
+          margin: 5px;
         `}
       >
         <div
@@ -114,6 +124,11 @@ const Home = () => {
           flex-direction: column;
           justify-content: center;
           align-items: center;
+          backdrop-filter: blur(16px) saturate(180%);
+          background-color: rgba(17, 25, 40, 0.15);
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.125);
+          margin: 5px;
         `}
       >
         <div

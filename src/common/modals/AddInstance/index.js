@@ -23,6 +23,10 @@ const AddInstance = ({ defaultPage }) => {
         width: 80%;
         max-width: 1000px;
         overflow: hidden;
+        background-color: rgba(17, 25, 40, 0.55);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.125);
+        margin: 5px;
       `}
       title="Add New Instance"
     >

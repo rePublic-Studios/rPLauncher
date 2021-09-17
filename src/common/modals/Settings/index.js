@@ -20,12 +20,18 @@ const Container = styled.div`
 `;
 const SideMenu = styled.div`
   flex: 0;
-  flex-grow: 1;
+  flex-grow: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   background: ${props => props.theme.palette.grey[800]};
   padding-top: calc(${props => props.theme.sizes.height.systemNavbar} + 5px);
+
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(17, 25, 40, 0.55);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.125);
+  margin: 5px;
 `;
 
 const SettingsContainer = styled.div`
@@ -66,6 +72,11 @@ const SettingsButton = styled(({ active, ...props }) => <Button {...props} />)`
     color: ${props => props.theme.palette.text.primary};
     background: ${props => props.theme.palette.grey[600]};
   }
+
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(17, 25, 40, 0.35);
+  border-radius: 12px;
+  margin: 5px;
 `;
 
 const SettingsTitle = styled.div`
@@ -107,6 +118,7 @@ export default function Settings() {
       css={`
         height: 100%;
         width: 100%;
+        background-color: rgba(0, 0, 0, 0.25);
       `}
       header="false"
     >

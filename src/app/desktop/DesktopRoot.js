@@ -25,7 +25,6 @@ import {
 } from '../../common/reducers/loading/actions';
 import features from '../../common/reducers/loading/features';
 import GlobalStyles from '../../common/GlobalStyles';
-import RouteBackground from '../../common/components/RouteBackground';
 import ga from '../../common/utils/analytics';
 import routes from './utils/routes';
 import { _getCurrentAccount } from '../../common/utils/selectors';
@@ -43,14 +42,18 @@ const Wrapper = styled.div`
 
 const Container = styled.div`
   position: absolute;
-  top: ${props => props.theme.sizes.height.systemNavbar}px;
-  height: calc(100vh - ${props => props.theme.sizes.height.systemNavbar}px);
-  width: 100vw;
+  height: 99vh;
+  width: 99vw;
   display: flex;
   flex-direction: column;
   transition: transform 0.2s;
   transition-timing-function: cubic-bezier(0.165, 0.84, 0.44, 1);
   will-change: transform;
+  backdrop-filter: blur(16px) saturate(180%);
+  background-color: rgba(17, 25, 40, 0.75);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.125);
+  margin: 5px;
 `;
 
 function DesktopRoot({ store }) {
@@ -178,11 +181,10 @@ function DesktopRoot({ store }) {
 
   return (
     <Wrapper>
-      <SystemNavbar />
       <Message />
       <Container style={contentStyle}>
+        <SystemNavbar />
         <GlobalStyles />
-        <RouteBackground />
         <Switch>
           {routes.map((route, i) => (
             <RouteWithSubRoutes key={i} {...route} /> // eslint-disable-line

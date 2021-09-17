@@ -2095,42 +2095,68 @@ export function downloadInstance(instanceName) {
     const instancePath = path.join(_getInstancesPath(state), instanceName);
     const filePath = `${instancePath}/options.txt`;
 
-    const fullScreen = state.settings.fullscreen;
-    const { autoJump } = state.settings;
-    const { guiScale } = state.settings;
-    const { fov } = state.settings;
-    const { fps } = state.settings;
-    const { renderDistance } = state.settings;
-    const { soundCategoryMaster } = state.settings;
-    const { soundCategoryMusik } = state.settings;
-    const { soundCategoryJukebox } = state.settings;
-    const { soundCategoryWeather } = state.settings;
-    const { soundCategoryBlocks } = state.settings;
-    const { soundCategoryHostile } = state.settings;
-    const { soundCategoryNeutral } = state.settings;
-    const { soundCategoryPlayer } = state.settings;
-    const { soundCategoryAmbient } = state.settings;
-    const { soundCategoryVoice } = state.settings;
-    const { vsync } = state.settings;
+    const {
+      fullscreen,
+      autoJump,
+      guiScale,
+      fov,
+      fps,
+      renderDistance,
+      soundCategoryMaster,
+      soundCategoryMusik,
+      soundCategoryJukebox,
+      soundCategoryWeather,
+      soundCategoryBlocks,
+      soundCategoryHostile,
+      soundCategoryNeutral,
+      soundCategoryPlayer,
+      soundCategoryAmbient,
+      soundCategoryVoice,
+      vsync,
+      muteAllSounds
+    } = state.settings;
 
-    const data =
-      `fullscreen:${fullScreen}\n` +
-      `autoJump:${autoJump}\n` +
-      `guiScale:${guiScale}\n` +
-      `fov:${fov}\n` +
-      `maxFps:${fps}\n` +
-      `renderDistance:${renderDistance}\n` +
-      `soundCategory_master:${soundCategoryMaster}\n` +
-      `soundCategory_music:${soundCategoryMusik}\n` +
-      `soundCategory_record:${soundCategoryJukebox}\n` +
-      `soundCategory_weather:${soundCategoryWeather}\n` +
-      `soundCategory_blocks:${soundCategoryBlocks}\n` +
-      `soundCategory_hostile:${soundCategoryHostile}\n` +
-      `soundCategory_neutral:${soundCategoryNeutral}\n` +
-      `soundCategory_player:${soundCategoryPlayer}\n` +
-      `soundCategory_ambient:${soundCategoryAmbient}\n` +
-      `soundCategory_voice:${soundCategoryVoice}\n` +
-      `enableVsync:${vsync}`;
+    let data;
+
+    if (!muteAllSounds) {
+      data =
+        `fullscreen:${fullscreen}\n` +
+        `autoJump:${autoJump}\n` +
+        `guiScale:${guiScale}\n` +
+        `fov:${fov}\n` +
+        `maxFps:${fps}\n` +
+        `renderDistance:${renderDistance}\n` +
+        `soundCategory_master:${soundCategoryMaster}\n` +
+        `soundCategory_music:${soundCategoryMusik}\n` +
+        `soundCategory_record:${soundCategoryJukebox}\n` +
+        `soundCategory_weather:${soundCategoryWeather}\n` +
+        `soundCategory_blocks:${soundCategoryBlocks}\n` +
+        `soundCategory_hostile:${soundCategoryHostile}\n` +
+        `soundCategory_neutral:${soundCategoryNeutral}\n` +
+        `soundCategory_player:${soundCategoryPlayer}\n` +
+        `soundCategory_ambient:${soundCategoryAmbient}\n` +
+        `soundCategory_voice:${soundCategoryVoice}\n` +
+        `enableVsync:${vsync}`;
+    } else {
+      data =
+        `fullscreen:${fullscreen}\n` +
+        `autoJump:${autoJump}\n` +
+        `guiScale:${guiScale}\n` +
+        `fov:${fov}\n` +
+        `maxFps:${fps}\n` +
+        `renderDistance:${renderDistance}\n` +
+        `soundCategory_master:0\n` +
+        `soundCategory_music:0\n` +
+        `soundCategory_record:0\n` +
+        `soundCategory_weather:0\n` +
+        `soundCategory_blocks:0\n` +
+        `soundCategory_hostile:0\n` +
+        `soundCategory_neutral:0\n` +
+        `soundCategory_player:0\n` +
+        `soundCategory_ambient:0\n` +
+        `soundCategory_voice:0\n` +
+        `enableVsync:${vsync}`;
+    }
 
     try {
       if (!fss.existsSync(filePath)) {
