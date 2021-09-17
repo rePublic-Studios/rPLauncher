@@ -20,7 +20,7 @@ const ChangeLogs = () => {
             `https://api.github.com/repos/rePublic-Studios/rPLauncher/releases/tags/v${ver}`
           );
           if (releaseData?.data)
-            setNews(releaseData?.data?.body?.replace('- ', '').split('\n'));
+            setNews(releaseData?.data?.body?.replaceAll('- ', '').split('\n'));
         })();
 
         return true;
@@ -33,6 +33,11 @@ const ChangeLogs = () => {
       css={`
         height: 500px;
         width: 650px;
+        backdrop-filter: blur(16px) saturate(180%);
+        background-color: rgba(17, 25, 40, 0.55);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.125);
+        margin: 5px;
       `}
       title={`What's new in ${version}`}
     >
@@ -72,13 +77,8 @@ const SectionTitle = styled.h2`
   width: 100%;
   text-align: center;
   border-bottom: 1px solid;
-  line-height: 0.1em;
-  margin: 10px 0 20px;
+  margin: 0px 0 20px;
 
-  span {
-    background: ${props => props.theme.palette.secondary.main};
-    padding: 0 10px;
-  }
 `;
 
 const Section = styled.div`
