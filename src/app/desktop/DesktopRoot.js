@@ -50,7 +50,7 @@ const Container = styled.div`
   transition-timing-function: cubic-bezier(0.165, 0.84, 0.44, 1);
   will-change: transform;
   backdrop-filter: blur(16px) saturate(180%);
-  background-color: rgba(17, 25, 40, 0.75);
+  background-color: rgba(17, 25, 40, 0.55);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.125);
   margin: 5px;
