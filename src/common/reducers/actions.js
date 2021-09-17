@@ -655,10 +655,12 @@ export function loginWithAccessToken(redirect = true) {
   return async (dispatch, getState) => {
     const state = getState();
     const currentAccount = _getCurrentAccount(state);
-    const { accessToken, clientToken, selectedProfile } = currentAccount;
+    const { accessToken, clientToken, selectedProfile, accountType } =
+      currentAccount;
+
     if (!accessToken) throw new Error();
     try {
-      if (state === ACCOUNT_MOJANG) {
+      if (accountType === ACCOUNT_MOJANG) {
         await mcValidate(accessToken, clientToken);
         try {
           dispatch(
@@ -670,7 +672,7 @@ export function loginWithAccessToken(redirect = true) {
         } catch (err) {
           console.warn('Could not fetch skin');
         }
-      } else if (state === ACCOUNT_ELYBY) {
+      } else if (accountType === ACCOUNT_ELYBY) {
         await mcElyByValidate(accessToken, clientToken);
         try {
           dispatch(
@@ -689,13 +691,13 @@ export function loginWithAccessToken(redirect = true) {
       // Trying refreshing the stored access token
       if (error.response && error.response.status === 403) {
         try {
-          if (state === ACCOUNT_MOJANG) {
+          if (accountType === ACCOUNT_MOJANG) {
             const { data } = await mcRefresh(accessToken, clientToken);
             data.skin = await mojangPlayerSkinService(data.selectedProfile.id);
 
             dispatch(updateAccount(data.selectedProfile.id, data));
             dispatch(updateCurrentAccountId(data.selectedProfile.id));
-          } else if (state === ACCOUNT_ELYBY) {
+          } else if (accountType === ACCOUNT_ELYBY) {
             const { data } = await mcElyByRefresh(accessToken, clientToken);
             data.skin = await elyByPlayerSkinService(data.selectedProfile.name);
 
@@ -723,7 +725,6 @@ export function loginWithAccessToken(redirect = true) {
 
 export function loginLocalWithoutAccessToken() {
   return async (dispatch, getState) => {
-    console.log('lol');
     const state = getState();
     const currentAccount = _getCurrentAccount(state);
     const { selectedProfile } = currentAccount;
@@ -936,12 +937,13 @@ export function logout() {
     const {
       clientToken,
       accessToken,
-      selectedProfile: { id }
+      selectedProfile: { id },
+      accountType
     } = _getCurrentAccount(state);
 
-    if (state === ACCOUNT_MOJANG) {
+    if (accountType === ACCOUNT_MOJANG) {
       mcInvalidate(accessToken, clientToken).catch(console.error);
-    } else if (state === ACCOUNT_ELYBY) {
+    } else if (accountType === ACCOUNT_ELYBY) {
       mcElyByInvalidate(accessToken, clientToken).catch(console.error);
     }
 

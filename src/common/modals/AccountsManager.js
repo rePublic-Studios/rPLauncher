@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Spin, message } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faRedo, faTrash } from '@fortawesome/free-solid-svg-icons';
 import Modal from '../components/Modal';
 import { _getAccounts, _getCurrentAccount } from '../utils/selectors';
 import { openModal, closeModal } from '../reducers/modals/actions';
@@ -50,18 +50,16 @@ const ProfileSettings = () => {
         <AccountsContainer>
           {accounts.map(account => {
             if (!account || !currentAccount) return;
+            const isCurrentAccount =
+              account.selectedProfile.id === currentAccount.selectedProfile.id;
             return (
               <AccountContainer key={account.selectedProfile.id}>
                 <AccountItem
-                  active={
-                    account.selectedProfile.id ===
-                    currentAccount.selectedProfile.id
-                  }
+                  active={isCurrentAccount}
                   onClick={() => {
                     if (
                       isLoading.isRequesting ||
-                      account.selectedProfile.id ===
-                        currentAccount.selectedProfile.id ||
+                      isCurrentAccount ||
                       (!account.accessToken &&
                         account.accountType !== ACCOUNT_LOCAL)
                     ) {
@@ -132,34 +130,91 @@ const ProfileSettings = () => {
                         Login again
                       </HoverContainer>
                     )}
-                  {account.selectedProfile.id ===
-                    currentAccount.selectedProfile.id && (
+                  {isCurrentAccount && (
                     <Spin spinning={isLoading.isRequesting} />
                   )}
+
+                  <div
+                    css={`
+                      display: flex;
+                      margin-right: 0;
+                      margin-left: auto;
+                    `}
+                  >
+                    {isCurrentAccount && account.accountType !== ACCOUNT_LOCAL && (
+                      <div
+                        css={`
+                          margin-left: 10px;
+                          font-size: 16px;
+                          cursor: pointer;
+                          transition: color 0.1s ease-in-out;
+                          &:hover {
+                            color: #ffa726;
+                          }
+                        `}
+                      >
+                        <FontAwesomeIcon
+                          onClick={async () => {
+                            dispatch(
+                              load(
+                                features.mcAuthentication,
+                                dispatch(() => {
+                                  switch (account.accountType) {
+                                    case ACCOUNT_MICROSOFT:
+                                      dispatch(
+                                        loginWithOAuthAccessToken(false)
+                                      );
+                                      break;
+                                    case ACCOUNT_LOCAL:
+                                      dispatch(
+                                        loginLocalWithoutAccessToken(false)
+                                      );
+                                      break;
+                                    default:
+                                      dispatch(loginWithAccessToken(false));
+                                      break;
+                                  }
+                                })
+                              )
+                            ).catch(() => {
+                              dispatch(
+                                updateAccount(account.selectedProfile.id, {
+                                  ...account,
+                                  accessToken: null
+                                })
+                              );
+                              message.error('Account not valid');
+                            });
+                          }}
+                          icon={faRedo}
+                        />
+                      </div>
+                    )}
+                    <div
+                      css={`
+                        margin-left: 10px;
+                        font-size: 16px;
+                        cursor: pointer;
+                        transition: color 0.1s ease-in-out;
+                        &:hover {
+                          color: ${props => props.theme.palette.error.main};
+                        }
+                      `}
+                    >
+                      <FontAwesomeIcon
+                        onClick={async () => {
+                          const result = await dispatch(
+                            removeAccount(account.selectedProfile.id)
+                          );
+                          if (!result) {
+                            dispatch(closeModal());
+                          }
+                        }}
+                        icon={faTrash}
+                      />
+                    </div>
+                  </div>
                 </AccountItem>
-                <div
-                  css={`
-                    margin-left: 10px;
-                    font-size: 16px;
-                    cursor: pointer;
-                    transition: color 0.1s ease-in-out;
-                    &:hover {
-                      color: ${props => props.theme.palette.error.main};
-                    }
-                  `}
-                >
-                  <FontAwesomeIcon
-                    onClick={async () => {
-                      const result = await dispatch(
-                        removeAccount(account.selectedProfile.id)
-                      );
-                      if (!result) {
-                        dispatch(closeModal());
-                      }
-                    }}
-                    icon={faTrash}
-                  />
-                </div>
               </AccountContainer>
             );
           })}
