@@ -4,24 +4,27 @@ const log = require('electron-log');
 let client;
 let activity;
 
+const initialAppStartup = Math.floor(Date.now() / 1000);
+
+const defaultValue = {
+  details: 'Idleing in rPLauncher',
+  startTimestamp: initialAppStartup,
+  largeImageKey: 'default_big',
+  largeImageText: 'rPLauncher - A Custom Minecraft Launcher',
+  buttons: [
+    { label: 'Join Discord', url: 'https://discord.gg/FFw9vYMQA6' },
+    {
+      label: 'Github',
+      url: 'https://github.com/rePublic-Studios/rPLauncher'
+    }
+  ]
+};
+
 exports.initRPC = () => {
   exports.shutdownRPC();
   client = new Client({ transport: 'ipc' });
 
-  activity = {
-    details: 'Playing rPLauncher',
-    state: 'Idle',
-    startTimestamp: Math.floor(Date.now() / 1000),
-    largeImageKey: 'default_big',
-    largeImageText: 'rPLauncher - A Custom Minecraft Launcher',
-    buttons: [
-      { label: 'Join Discord', url: 'https://discord.gg/FFw9vYMQA6' },
-      {
-        label: 'Github',
-        url: 'https://github.com/rePublic-Studios/rPLauncher'
-      }
-    ]
-  };
+  activity = defaultValue;
 
   client.on('ready', () => {
     log.log('Discord RPC Connected');
@@ -37,9 +40,18 @@ exports.initRPC = () => {
   });
 };
 
-exports.updateDetails = details => {
-  activity.details = details;
-  console.log(activity);
+exports.update = details => {
+  activity = {
+    ...activity,
+    startTimestamp: Math.floor(Date.now() / 1000),
+    details: `Playing ${details}`
+  };
+  client.setActivity(activity);
+};
+
+exports.reset = () => {
+  activity = defaultValue;
+  activity.startTimestamp = initialAppStartup;
   client.setActivity(activity);
 };
 

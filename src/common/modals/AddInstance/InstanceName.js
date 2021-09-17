@@ -18,7 +18,8 @@ import { closeModal, openModal } from '../../reducers/modals/actions';
 import {
   downloadAddonZip,
   importAddonZip,
-  convertcurseForgeToCanonical
+  convertcurseForgeToCanonical,
+  extractFabricVersionFromManifest
 } from '../../../app/desktop/utils';
 import { _getInstancesPath, _getTempPath } from '../../utils/selectors';
 import bgImage from '../../assets/mcCube.jpg';
@@ -153,7 +154,8 @@ const InstanceName = ({
           ),
           fileID: version?.fileID,
           projectID: version?.projectID,
-          source: version?.source
+          source: version?.source,
+          sourceName: manifest.name
         };
 
         dispatch(
@@ -182,7 +184,8 @@ const InstanceName = ({
           loaderVersion,
           fileID: manifest.minecraft.modLoaders[0].loader,
           projectID: version?.projectID,
-          source: version?.source
+          source: version?.source,
+          sourceName: manifest.name
         };
         dispatch(
           addToQueue(
@@ -240,7 +243,8 @@ const InstanceName = ({
               ),
         fileID: version?.fileID,
         projectID: version?.projectID,
-        source: FTB
+        source: FTB,
+        sourceName: originalMcName
       };
 
       let ramAmount = null;
@@ -298,7 +302,7 @@ const InstanceName = ({
       );
 
       if (version?.loaderType === FORGE) {
-        const loader = {
+        Object.assign(loader, {
           loaderType: version?.loaderType,
           mcVersion: manifest.minecraft.version,
           loaderVersion: convertcurseForgeToCanonical(
@@ -306,23 +310,23 @@ const InstanceName = ({
             manifest.minecraft.version,
             forgeManifest
           )
-        };
+        });
 
         dispatch(addToQueue(localInstanceName, loader, manifest));
       } else if (version?.loaderType === FABRIC) {
-        const loader = {
+        Object.assign(loader, {
           loaderType: version?.loaderType,
           mcVersion: manifest.minecraft.version,
           loaderVersion: manifest.minecraft.modLoaders[0].yarn,
           fileID: manifest.minecraft.modLoaders[0].loader
-        };
+        });
 
         dispatch(addToQueue(localInstanceName, loader, manifest));
       } else if (version?.loaderType === VANILLA) {
-        const loader = {
+        Object.assign(loader, {
           loaderType: version?.loaderType,
           mcVersion: manifest.minecraft.version
-        };
+        });
         dispatch(addToQueue(localInstanceName, loader, manifest));
       }
     } else if (isVanilla) {
@@ -425,7 +429,9 @@ const InstanceName = ({
                       }}
                       css={`
                         opacity: ${({ state }) =>
-                          state === 'entering' || state === 'entered' ? 0 : 1};
+                          state === 'entering' || state === 'entered'
+                            ? 0
+                            : 1} !important;
                         transition: 0.1s ease-in-out;
                         width: 300px;
                         align-self: center;
