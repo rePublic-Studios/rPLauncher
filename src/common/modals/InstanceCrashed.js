@@ -50,8 +50,12 @@ const InstanceCrashed = ({ code, errorLogs }) => {
   return (
     <Modal
       css={`
-        height: 450px;
+        height: 500px;
         width: 500px;
+        backdrop-filter: blur(16px) saturate(180%);
+        background-color: rgba(17, 25, 40, 0.55);
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.125);
       `}
       title="The instance could not be launched"
     >
@@ -66,6 +70,10 @@ const InstanceCrashed = ({ code, errorLogs }) => {
         <Card
           css={`
             margin: 10px 0 20px 0;
+            backdrop-filter: blur(16px) saturate(180%);
+            background-color: rgba(17, 25, 40, 0.55);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.125);
           `}
         >
           <h3>Error: </h3>
@@ -87,6 +95,7 @@ const InstanceCrashed = ({ code, errorLogs }) => {
                   flex-direction: row;
                   justify-content: space-between;
                   align-items: center;
+                  color: black;
                 `}
               >
                 <>Error Log</> &nbsp;
