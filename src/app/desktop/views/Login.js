@@ -4,16 +4,10 @@ import { ipcRenderer } from 'electron';
 import styled from 'styled-components';
 import { Transition } from 'react-transition-group';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faArrowRight,
-  faExclamationCircle,
-  faCheckCircle,
-  faSpinner
-} from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Input, Button, Menu, Dropdown } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useKey } from 'rooks';
-import axios from 'axios';
 import {
   mojangLogin,
   elyByLogin,
@@ -120,13 +114,6 @@ const Footer = styled.div`
   width: calc(100% - 80px);
 `;
 
-const Status = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: ${props => props.theme.palette.text.third};
-`;
-
 const FooterLinks = styled.div`
   font-size: 0.75rem;
   margin: 0 !important;
@@ -166,29 +153,12 @@ const StyledAccountMenuItem = styled(Menu.Item)`
   font-size: 18px;
 `;
 
-const StatusIcon = ({ color }) => {
-  return (
-    <FontAwesomeIcon
-      icon={color === 'red' ? faExclamationCircle : faCheckCircle}
-      color={color}
-      css={`
-        margin: 0 5px;
-        color: ${props =>
-          props.color === 'green'
-            ? props.theme.palette.colors.green
-            : props.theme.palette.error.main};
-      `}
-    />
-  );
-};
-
 const Login = () => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
   const [version, setVersion] = useState(null);
   const [loginFailed, setLoginFailed] = useState(false);
-  const [status, setStatus] = useState({});
   const [selectedSerivce, setSelectedService] = useState('Mojang Account');
   const loading = useSelector(
     state => state.loading.accountAuthentication.isRequesting
@@ -323,12 +293,6 @@ const Login = () => {
             v{version}
           </div>
         </div>
-        <Status>
-          Auth: <StatusIcon color={status['authserver.mojang.com']} />
-          Session: <StatusIcon color={status['session.minecraft.net']} />
-          Skins: <StatusIcon color={status['textures.minecraft.net']} />
-          API: <StatusIcon color={status['api.mojang.com']} />
-        </Status>
       </Footer>
     </Container>
   );
@@ -506,18 +470,10 @@ const Login = () => {
     </Container>
   );
 
-  const fetchStatus = async () => {
-    const { data } = await axios.get('https://status.mojang.com/check');
-    const result = {};
-    Object.assign(result, ...data);
-    setStatus(result);
-  };
-
   useKey(['Enter'], authenticateMojang);
 
   useEffect(() => {
     ipcRenderer.invoke('getAppVersion').then(setVersion).catch(console.error);
-    fetchStatus().catch(console.error);
   }, []);
 
   const menu = (
