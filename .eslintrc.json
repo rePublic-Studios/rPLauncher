@@ -4,7 +4,12 @@
     "es6": true,
     "node": true
   },
-  "extends": ["airbnb", "prettier", "plugin:prettier/recommended"],
+  "root": true,
+  "extends": [
+    "airbnb",
+    "prettier",
+    "plugin:prettier/recommended"
+  ],
   "globals": {
     "Atomics": "readonly",
     "SharedArrayBuffer": "readonly"
@@ -13,11 +18,27 @@
     "import/resolver": {
       "alias": {
         "map": [
-          ["^ui$", "./src/ui"],
-          ["app", "./src/app/"],
-          ["common", "./src/common"]
+          [
+            "^ui$",
+            "./src/ui"
+          ],
+          [
+            "app",
+            "./src/app/"
+          ],
+          [
+            "common",
+            "./src/common"
+          ]
         ],
-        "extensions": [".js", ".jsx", ".json", ".svg", ".png", ".jpg"]
+        "extensions": [
+          ".js",
+          ".jsx",
+          ".json",
+          ".svg",
+          ".png",
+          ".jpg"
+        ]
       }
     }
   },
@@ -63,7 +84,14 @@
     "react/jsx-no-bind": "off",
     "react/jsx-filename-extension": "off",
     "react/prop-types": "off",
-    "react/forbid-dom-props": [2, { "forbid": ["style"] }],
+    "react/forbid-dom-props": [
+      2,
+      {
+        "forbid": [
+          "style"
+        ]
+      }
+    ],
     "import/no-anonymous-default-export": [
       "error",
       {
@@ -76,10 +104,21 @@
         "allowObject": true
       }
     ],
-    "react/jsx-pascal-case": [2, { "allowAllCaps": false }],
+    "import/no-useless-path-segments": "off",
+    "react/jsx-pascal-case": [
+      2,
+      {
+        "allowAllCaps": false
+      }
+    ],
     "react/prefer-stateless-function": "off",
     "import/no-unresolved": "off",
-    "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "devDependencies": true
+      }
+    ],
     "jsx-a11y/anchor-is-valid": "off"
   }
 }
