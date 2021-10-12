@@ -18,7 +18,12 @@ import { useDebouncedCallback } from 'use-debounce';
 import { FixedSizeList as List } from 'react-window';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle } from '@fortawesome/free-regular-svg-icons';
-import { faBomb, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
+import {
+  faBomb,
+  faExclamationCircle,
+  faWrench,
+  faDownload
+} from '@fortawesome/free-solid-svg-icons';
 import Modal from '../components/Modal';
 import { getSearch, getAddonFiles } from '../api';
 import { openModal } from '../reducers/modals/actions';
@@ -32,12 +37,6 @@ import {
   getPatchedInstanceType
 } from '../../app/desktop/utils';
 
-const ItemName = styled.div`
-  color: ${props => props.theme.palette.text.third};
-  transition: color 0.1s ease-in-out;
-  cursor: pointer;
-`;
-
 const RowContainer = styled.div`
   display: flex;
   position: relative;
@@ -50,12 +49,6 @@ const RowContainer = styled.div`
   ${props =>
     props.isInstalled &&
     `border: 2px solid ${props.theme.palette.colors.green};`}
-
-  &:hover {
-    ${ItemName} {
-      color: ${props => props.theme.palette.text.primary};
-    }
-  }
 `;
 
 const RowInnerContainer = styled.div`
@@ -155,7 +148,7 @@ const ModsListWrapper = ({
     const item = items[index];
 
     const isInstalled = installedMods.find(v => v.projectID === item?.id);
-    const primaryImage = item?.attachments.find(v => v.isDefault);
+    const primaryImage = (item?.attachments || []).find(v => v?.isDefault);
 
     if (!item) {
       return (
@@ -174,8 +167,8 @@ const ModsListWrapper = ({
         isInstalled={isInstalled}
         style={{
           ...style,
-          top: style.top + 10,
-          height: style.height - 10,
+          top: style.top + 15,
+          height: style.height - 15,
           position: 'absolute',
           margin: '15px 10px',
           transition: 'height 0.2s ease-in-out'
@@ -187,10 +180,18 @@ const ModsListWrapper = ({
         <RowInnerContainer>
           <RowContainerImg
             style={{
-              background: `url('${primaryImage?.thumbnailUrl}') center center`
+              backgroundImage: `url('${primaryImage?.thumbnailUrl}')`
             }}
           />
-          <ItemName
+          <div
+            css={`
+              color: ${props => props.theme.palette.text.third};
+              &:hover {
+                color: ${props => props.theme.palette.text.primary};
+              }
+              transition: color 0.1s ease-in-out;
+              cursor: pointer;
+            `}
             onClick={() => {
               dispatch(
                 openModal('ModOverview', {
@@ -204,30 +205,11 @@ const ModsListWrapper = ({
             }}
           >
             {item.name}
-          </ItemName>
+          </div>
         </RowInnerContainer>
         {!isInstalled ? (
           error || (
             <div>
-              <Button
-                type="primary"
-                css={`
-                  margin-right: 10px;
-                `}
-                onClick={() => {
-                  dispatch(
-                    openModal('ModOverview', {
-                      gameVersion,
-                      projectID: item.id,
-                      ...(isInstalled && { fileID: isInstalled.fileID }),
-                      ...(isInstalled && { fileName: isInstalled.fileName }),
-                      instanceName
-                    })
-                  );
-                }}
-              >
-                Explore
-              </Button>
               <Button
                 type="primary"
                 onClick={async e => {
@@ -290,7 +272,7 @@ const ModsListWrapper = ({
                 }}
                 loading={loading}
               >
-                Install
+                <FontAwesomeIcon icon={faDownload} />
               </Button>
             </div>
           )
@@ -309,7 +291,7 @@ const ModsListWrapper = ({
               );
             }}
           >
-            Change version / explore
+            <FontAwesomeIcon icon={faWrench} />
           </Button>
         )}
       </RowContainer>
@@ -331,7 +313,7 @@ const ModsListWrapper = ({
           isNextPageLoading={isNextPageLoading}
           items={items}
           itemData={itemData}
-          itemCount={itemCount !== 0 ? itemCount : 40}
+          itemCount={items.length}
           itemSize={80}
           useIsScrolling
           onItemsRendered={onItemsRendered}
@@ -399,11 +381,6 @@ const ModsBrowser = ({ instanceName, gameVersion }) => {
       setAreModsLoading(true);
     }
 
-    if (reset && (mods.length !== 0 || hasNextPage)) {
-      setMods([]);
-      setHasNextPage(false);
-    }
-
     const isReset = reset !== undefined ? reset : false;
     let data = null;
     try {
@@ -418,7 +395,8 @@ const ModsBrowser = ({ instanceName, gameVersion }) => {
         filterType,
         filterType !== 'Author' && filterType !== 'Name',
         gameVersion,
-        getPatchedInstanceType(instance) === FABRIC ? 4780 : null
+        0,
+        getPatchedInstanceType(instance)
       ));
     } catch (err) {
       setError(err);
@@ -427,8 +405,8 @@ const ModsBrowser = ({ instanceName, gameVersion }) => {
     const newMods = reset ? data : mods.concat(data);
     if (lastRequest === reqObj) {
       setAreModsLoading(false);
-      setHasNextPage((newMods || []).length % itemsNumber === 0);
       setMods(newMods || []);
+      setHasNextPage((newMods || []).length % itemsNumber === 0);
     }
   };
 
@@ -454,8 +432,8 @@ const ModsBrowser = ({ instanceName, gameVersion }) => {
         <Header>
           <Select
             css={`
-              width: 160px;
-              margin: 0 10px;
+              width: 160px !important;
+              margin: 0 10px !important;
             `}
             defaultValue={filterType}
             onChange={setFilterType}
@@ -471,9 +449,9 @@ const ModsBrowser = ({ instanceName, gameVersion }) => {
           </Select>
           <Input
             css={`
-              height: 32px;
+              height: 32px !important;
             `}
-            placeholder="Search for a mod"
+            placeholder="Search..."
             value={searchQuery}
             onChange={e => {
               setSearchQuery(e.target.value);
@@ -565,7 +543,7 @@ const ModsLoader = memo(
       <ContentLoader
         style={{
           width: width - 10,
-          height: '80px',
+          height: '62px',
           paddingTop: 8,
           position: 'absolute',
           top
@@ -575,7 +553,7 @@ const ModsLoader = memo(
         backgroundColor={ContextTheme.palette.grey[800]}
         title={false}
       >
-        <rect x="0" y="0" width="100%" height="70px" />
+        <rect x="0" y="0" width="100%" height="65px" />
       </ContentLoader>
     );
   }
