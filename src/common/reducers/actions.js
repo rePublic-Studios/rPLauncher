@@ -658,29 +658,34 @@ export function loginWithAccessToken(redirect = true) {
     const { accessToken, clientToken, selectedProfile, accountType } =
       currentAccount;
 
-    if (!accessToken) throw new Error();
     try {
       if (accountType === ACCOUNT_MOJANG) {
         await mcValidate(accessToken, clientToken);
         try {
-          dispatch(
-            updateAccount(selectedProfile.id, {
-              ...currentAccount,
-              skin: await mojangPlayerSkinService(selectedProfile.id)
-            })
-          );
+          const skinUrl = await mojangPlayerSkinService(selectedProfile.id);
+          if (skinUrl) {
+            dispatch(
+              updateAccount(selectedProfile.id, {
+                ...currentAccount,
+                skin: skinUrl
+              })
+            );
+          }
         } catch (err) {
           console.warn('Could not fetch skin');
         }
       } else if (accountType === ACCOUNT_ELYBY) {
         await mcElyByValidate(accessToken, clientToken);
         try {
-          dispatch(
-            updateAccount(selectedProfile.id, {
-              ...currentAccount,
-              skin: await elyByPlayerSkinService(selectedProfile.name)
-            })
-          );
+          const skinUrl = await elyByPlayerSkinService(selectedProfile.name);
+          if (skinUrl) {
+            dispatch(
+              updateAccount(selectedProfile.id, {
+                ...currentAccount,
+                skin: skinUrl
+              })
+            );
+          }
         } catch (err) {
           console.warn('Could not fetch skin');
         }
@@ -693,14 +698,22 @@ export function loginWithAccessToken(redirect = true) {
         try {
           if (accountType === ACCOUNT_MOJANG) {
             const { data } = await mcRefresh(accessToken, clientToken);
-            data.skin = await mojangPlayerSkinService(data.selectedProfile.id);
-
+            const skinUrl = await mojangPlayerSkinService(
+              data.selectedProfile.id
+            );
+            if (skinUrl) {
+              data.skin = skinUrl;
+            }
             dispatch(updateAccount(data.selectedProfile.id, data));
             dispatch(updateCurrentAccountId(data.selectedProfile.id));
           } else if (accountType === ACCOUNT_ELYBY) {
             const { data } = await mcElyByRefresh(accessToken, clientToken);
-            data.skin = await elyByPlayerSkinService(data.selectedProfile.name);
-
+            const skinUrl = await elyByPlayerSkinService(
+              data.selectedProfile.name
+            );
+            if (skinUrl) {
+              data.skin = skinUrl;
+            }
             dispatch(updateAccount(data.selectedProfile.id, data));
             dispatch(updateCurrentAccountId(data.selectedProfile.id));
           }
@@ -709,15 +722,31 @@ export function loginWithAccessToken(redirect = true) {
           }
         } catch (nestedError) {
           console.error(error, nestedError);
+          currentAccount.accessToken = null;
+          dispatch(
+            openModal('AddAccount', {
+              username: currentAccount.user.username,
+              _accountType: accountType,
+              loginmessage: 'Your account is invalid, login again'
+            })
+          );
           if (redirect) {
             dispatch(push('/'));
           }
-          throw new Error();
         }
       } else if (error.message === 'Network Error') {
         if (redirect) {
           dispatch(push('/home'));
         }
+      } else {
+        currentAccount.accessToken = null;
+        dispatch(
+          openModal('AddAccount', {
+            username: currentAccount.user.username,
+            _accountType: accountType,
+            loginmessage: 'Your account is invalid, login again'
+          })
+        );
       }
     }
   };

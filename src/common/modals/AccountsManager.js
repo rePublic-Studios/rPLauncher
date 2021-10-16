@@ -113,19 +113,22 @@ const ProfileSettings = () => {
                     >
                       {!account.accessToken &&
                         account.accountType !== ACCOUNT_LOCAL &&
-                        '(EXPIRED)'}
+                        ' (EXPIRED)'}
                     </span>
                   </div>
                   {!account.accessToken &&
                     account.accountType !== ACCOUNT_LOCAL && (
                       <HoverContainer
-                        onClick={() =>
+                        onClick={() => {
                           dispatch(
                             openModal('AddAccount', {
-                              username: account.user.username
+                              username: account.user.username,
+                              _accountType: account.accountType,
+                              loginmessage:
+                                'Your account is invalid, login again'
                             })
-                          )
-                        }
+                          );
+                        }}
                       >
                         Login again
                       </HoverContainer>
@@ -141,55 +144,57 @@ const ProfileSettings = () => {
                       margin-left: auto;
                     `}
                   >
-                    {isCurrentAccount && account.accountType !== ACCOUNT_LOCAL && (
-                      <div
-                        css={`
-                          margin-left: 10px;
-                          font-size: 16px;
-                          cursor: pointer;
-                          transition: color 0.1s ease-in-out;
-                          &:hover {
-                            color: #ffa726;
-                          }
-                        `}
-                      >
-                        <FontAwesomeIcon
-                          onClick={async () => {
-                            dispatch(
-                              load(
-                                features.mcAuthentication,
-                                dispatch(() => {
-                                  switch (account.accountType) {
-                                    case ACCOUNT_MICROSOFT:
-                                      dispatch(
-                                        loginWithOAuthAccessToken(false)
-                                      );
-                                      break;
-                                    case ACCOUNT_LOCAL:
-                                      dispatch(
-                                        loginLocalWithoutAccessToken(false)
-                                      );
-                                      break;
-                                    default:
-                                      dispatch(loginWithAccessToken(false));
-                                      break;
-                                  }
-                                })
-                              )
-                            ).catch(() => {
+                    {account.accessToken &&
+                      isCurrentAccount &&
+                      account.accountType !== ACCOUNT_LOCAL && (
+                        <div
+                          css={`
+                            margin-left: 10px;
+                            font-size: 16px;
+                            cursor: pointer;
+                            transition: color 0.1s ease-in-out;
+                            &:hover {
+                              color: #ffa726;
+                            }
+                          `}
+                        >
+                          <FontAwesomeIcon
+                            onClick={async () => {
                               dispatch(
-                                updateAccount(account.selectedProfile.id, {
-                                  ...account,
-                                  accessToken: null
-                                })
-                              );
-                              message.error('Account not valid');
-                            });
-                          }}
-                          icon={faRedo}
-                        />
-                      </div>
-                    )}
+                                load(
+                                  features.mcAuthentication,
+                                  dispatch(() => {
+                                    switch (account.accountType) {
+                                      case ACCOUNT_MICROSOFT:
+                                        dispatch(
+                                          loginWithOAuthAccessToken(false)
+                                        );
+                                        break;
+                                      case ACCOUNT_LOCAL:
+                                        dispatch(
+                                          loginLocalWithoutAccessToken(false)
+                                        );
+                                        break;
+                                      default:
+                                        dispatch(loginWithAccessToken(false));
+                                        break;
+                                    }
+                                  })
+                                )
+                              ).catch(() => {
+                                dispatch(
+                                  updateAccount(account.selectedProfile.id, {
+                                    ...account,
+                                    accessToken: null
+                                  })
+                                );
+                                message.error('Account not valid');
+                              });
+                            }}
+                            icon={faRedo}
+                          />
+                        </div>
+                      )}
                   </div>
                 </AccountItem>
                 <div

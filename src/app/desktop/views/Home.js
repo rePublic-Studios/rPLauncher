@@ -1,7 +1,7 @@
 import React, { useState, useEffect, memo } from 'react';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Button } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import { ipcRenderer } from 'electron';
@@ -124,7 +124,19 @@ const Home = () => {
             `}
           />
         )}
-        {account && account.selectedProfile.name}
+        {account && account.accessToken ? (
+          account.selectedProfile.name
+        ) : (
+          <div
+            css={`
+              color: ${props => props.theme.palette.error.main};
+            `}
+          >
+            <FontAwesomeIcon icon={faExclamation} />
+            {` ${account.selectedProfile.name} `}
+            <FontAwesomeIcon icon={faExclamation} />
+          </div>
+        )}
       </AccountContainer>
     </div>
   );

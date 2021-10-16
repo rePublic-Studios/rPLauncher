@@ -22,13 +22,14 @@ import {
   ACCOUNT_LOCAL
 } from '../utils/constants';
 
-const AddAccount = ({ username }) => {
+const AddAccount = ({ username, _accountType, loginmessage }) => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState(username || '');
   const [password, setPassword] = useState('');
-  const [accountType, setAccountType] = useState(ACCOUNT_MOJANG);
-  const [selectedSerivce, setSelectedService] = useState('Mojang Account');
-  const [loginFailed, setLoginFailed] = useState();
+  const [accountType, setAccountType] = useState(
+    _accountType || ACCOUNT_MOJANG
+  );
+  const [loginFailed, setLoginFailed] = useState(loginmessage || '');
 
   const addMojangAccount = () => {
     dispatch(
@@ -80,10 +81,12 @@ const AddAccount = ({ username }) => {
   const renderAddMojangAccount = () => (
     <Container>
       <FormContainer>
-        <h1>Mojang Login</h1>
+        <h1>{getSelectedService()}</h1>
         {loginFailed && (
           <>
-            <LoginFailMessage>{loginFailed?.message}</LoginFailMessage>
+            <LoginFailMessage>
+              {loginFailed?.message ? loginFailed.message : loginFailed}
+            </LoginFailMessage>
           </>
         )}
         <StyledInput
@@ -109,10 +112,12 @@ const AddAccount = ({ username }) => {
   const renderAddElyByAccount = () => (
     <Container>
       <FormContainer>
-        <h1>Ely.By Login</h1>
+        <h1>{getSelectedService()}</h1>
         {loginFailed && (
           <>
-            <LoginFailMessage>{loginFailed?.message}</LoginFailMessage>
+            <LoginFailMessage>
+              {loginFailed?.message ? loginFailed.message : loginFailed}
+            </LoginFailMessage>
           </>
         )}
         <StyledInput
@@ -143,13 +148,15 @@ const AddAccount = ({ username }) => {
             height: 80px;
           `}
         >
-          Microsoft Login
+          {getSelectedService()}
         </h1>
         <FormContainer>
           <h2>External Login</h2>
           {loginFailed ? (
             <>
-              <LoginFailMessage>{loginFailed?.message}</LoginFailMessage>
+              <LoginFailMessage>
+                {loginFailed?.message ? loginFailed.message : loginFailed}
+              </LoginFailMessage>
               <StyledButton
                 css={`
                   margin-top: 12px;
@@ -170,10 +177,12 @@ const AddAccount = ({ username }) => {
   const renderAddLocalAccount = () => (
     <Container>
       <FormContainer>
-        <h1>Local Login</h1>
+        <h1>{getSelectedService()}</h1>
         {loginFailed && (
           <>
-            <LoginFailMessage>{loginFailed?.message}</LoginFailMessage>
+            <LoginFailMessage>
+              {loginFailed?.message ? loginFailed.message : loginFailed}
+            </LoginFailMessage>
           </>
         )}
         <StyledInput
@@ -201,7 +210,6 @@ const AddAccount = ({ username }) => {
         onClick={() => {
           setAccountType(ACCOUNT_MOJANG);
           setLoginFailed(null);
-          setSelectedService('Mojang Login');
         }}
       >
         Mojang Login
@@ -211,7 +219,6 @@ const AddAccount = ({ username }) => {
         onClick={() => {
           setAccountType(ACCOUNT_ELYBY);
           setLoginFailed(null);
-          setSelectedService('Ely.By Login');
         }}
       >
         Ely.By Login
@@ -222,7 +229,6 @@ const AddAccount = ({ username }) => {
           setAccountType(ACCOUNT_MICROSOFT);
           addMicrosoftAccount();
           setLoginFailed(null);
-          setSelectedService('Microsoft Login');
         }}
       >
         Microsoft Login
@@ -232,13 +238,35 @@ const AddAccount = ({ username }) => {
         onClick={() => {
           setAccountType(ACCOUNT_LOCAL);
           setLoginFailed(null);
-          setSelectedService('Offline Login');
         }}
       >
         Offline Login
       </StyledAccountMenuItem>
     </Menu>
   );
+
+  const getSelectedService = () => {
+    let service = '';
+    switch (accountType) {
+      case ACCOUNT_MOJANG:
+        service = 'Mojang Login';
+        break;
+      case ACCOUNT_ELYBY:
+        service = 'Ely.By Login';
+        break;
+      case ACCOUNT_MICROSOFT:
+        service = 'Microsoft Login';
+        break;
+      case ACCOUNT_LOCAL:
+        service = 'Offline Login';
+        break;
+      default:
+        service = 'Login';
+        break;
+    }
+
+    return service;
+  };
   return (
     <Modal
       css={`
@@ -254,6 +282,7 @@ const AddAccount = ({ username }) => {
     >
       <Dropdown
         overlay={menu}
+        disabled={!!_accountType}
         css={`
           width: 100%;
           height: 40px;
@@ -265,7 +294,7 @@ const AddAccount = ({ username }) => {
         trigger="click"
       >
         <Button>
-          {selectedSerivce} <DownOutlined />
+          {getSelectedService()} <DownOutlined />
         </Button>
       </Dropdown>
       <Container>
