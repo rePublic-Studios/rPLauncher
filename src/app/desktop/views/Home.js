@@ -5,6 +5,7 @@ import { faPlus, faExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Button } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import { ipcRenderer } from 'electron';
+import { ACCOUNT_LOCAL } from '../../../common/utils/constants';
 // import { promises as fs } from 'fs';
 // import path from 'path';
 import Instances from '../components/Instances';
@@ -124,7 +125,8 @@ const Home = () => {
             `}
           />
         )}
-        {account && account.accessToken ? (
+        {(account && account.accessToken) ||
+        account.accountType === ACCOUNT_LOCAL ? (
           account.selectedProfile.name
         ) : (
           <div
