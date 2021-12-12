@@ -20,14 +20,13 @@ import ftbIcon from '../../assets/ftbIcon.webp';
 const Content = ({
   in: inProp,
   setStep,
-  setPage,
   page,
+  setPage,
   setVersion,
   version,
   setModpack,
-  setImportZipPath,
   importZipPath,
-  setImportUpdate
+  setImportZipPath
 }) => {
   const [overrideNextStepOnClick, setOverrideNextStepOnClick] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -42,9 +41,8 @@ const Content = ({
     <Import
       setVersion={setVersion}
       setModpack={setModpack}
-      setImportZipPath={setImportZipPath}
       importZipPath={importZipPath}
-      setImportUpdate={setImportUpdate}
+      setImportZipPath={setImportZipPath}
       setOverrideNextStepOnClick={setOverrideNextStepOnClick}
     />,
     <FTBModpacks
@@ -83,7 +81,7 @@ const Content = ({
                   defaultValue={page}
                   onChange={e => setPage(e.target.value)}
                 >
-                  <Radio.Button value={0} >
+                  <Radio.Button value={0}>
                     <img
                       src={minecraftIcon}
                       width="22px"
@@ -209,7 +207,7 @@ const Content = ({
   );
 };
 
-export default React.memo(Content);
+export default Content;
 
 const Animation = styled.div`
   transition: 0.2s ease-in-out;

@@ -11,6 +11,7 @@ const getInstances = async instancesPath => {
       const configPath = path.join(
         path.join(instancesPath, instance, 'config.json')
       );
+      const rawConfig = await fs.readFile(configPath);
 
       // Remove temp config if present
       try {
@@ -22,19 +23,14 @@ const getInstances = async instancesPath => {
         // Nothing
       }
 
-      try {
-        const rawConfig = await fs.readFile(configPath);
-        // Restore config in case of crash
-        if (rawConfig.every(v => v === 0)) {
-          const backupConfigPath = path.join(
-            path.join(instancesPath, instance, 'config.bak.json')
-          );
-          const backupConfig = await fs.readFile(backupConfigPath);
-          JSON.parse(backupConfig);
-          await fs.rename(backupConfigPath, configPath);
-        }
-      } catch {
-        return null;
+      // Restore config in case of crash
+      if (rawConfig.every(v => v === 0)) {
+        const backupConfigPath = path.join(
+          path.join(instancesPath, instance, 'config.bak.json')
+        );
+        const backupConfig = await fs.readFile(backupConfigPath);
+        JSON.parse(backupConfig);
+        await fs.rename(backupConfigPath, configPath);
       }
 
       const newRawConfig = await fs.readFile(configPath);
@@ -107,9 +103,13 @@ const getInstances = async instancesPath => {
     return null;
   };
   const folders = await getDirectories(instancesPath);
-  const instances = await pMap(folders, mapFolderToInstance, {
-    concurrency: 5
-  });
+  const instances = await pMap(
+    folders.filter(folder => folder !== '.DS_Store'),
+    mapFolderToInstance,
+    {
+      concurrency: 5
+    }
+  );
   const hashMap = {};
   // eslint-disable-next-line
   for (const instance of instances) {

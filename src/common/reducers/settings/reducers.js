@@ -4,6 +4,7 @@ import {
   DEFAULT_JAVA_ARGS,
   DEFAULT_MEMORY
 } from '../../../app/desktop/utils/constants';
+import { MC_STARTUP_METHODS } from '../../utils/constants';
 
 function sounds(state = true, action) {
   switch (action.type) {
@@ -105,24 +106,10 @@ function minecraftSettings(
   }
 }
 
-function java(
-  state = {
-    path: null,
-    path16: null,
-    memory: DEFAULT_MEMORY,
-    args: DEFAULT_JAVA_ARGS
-  },
-  action
-) {
+function mcStartupMethod(state = MC_STARTUP_METHODS.DEFAULT, action) {
   switch (action.type) {
-    case ActionTypes.UPDATE_JAVA_ARGUMENTS:
-      return { ...state, args: action.args };
-    case ActionTypes.UPDATE_JAVA_MEMORY:
-      return { ...state, memory: action.memory };
-    case ActionTypes.UPDATE_JAVA_PATH:
-      return { ...state, path: action.path };
-    case ActionTypes.UPDATE_JAVA16_PATH:
-      return { ...state, path16: action.path };
+    case ActionTypes.UPDATE_MC_STARTUP_METHOD:
+      return action.method;
     default:
       return state;
   }
@@ -290,18 +277,44 @@ function muteAllSounds(state = false, action) {
   }
 }
 
+function java(
+  state = {
+    path: null,
+    pathLatest: null,
+    memory: DEFAULT_MEMORY,
+    args: DEFAULT_JAVA_ARGS
+  },
+  action
+) {
+  switch (action.type) {
+    case ActionTypes.UPDATE_JAVA_ARGUMENTS:
+      return { ...state, args: action.args };
+    case ActionTypes.UPDATE_JAVA_MEMORY:
+      return { ...state, memory: action.memory };
+    case ActionTypes.UPDATE_JAVA_PATH: {
+      return { ...state, path: action.path };
+    }
+    case ActionTypes.UPDATE_JAVA_LATEST_PATH: {
+      return { ...state, pathLatest: action.path };
+    }
+    default:
+      return state;
+  }
+}
+
 export default combineReducers({
   sounds,
   releaseChannel,
+  instanceSortOrder,
   concurrentDownloads,
   discordRPC,
   hideWindowOnGameLaunch,
   potatoPcMode,
   showNews,
   curseReleaseChannel,
-  instanceSortOrder,
   java,
   minecraftSettings,
+  mcStartupMethod,
   fullscreen,
   fov,
   fps,

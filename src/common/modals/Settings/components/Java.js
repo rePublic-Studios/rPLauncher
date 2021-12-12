@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { totalmem } from 'os';
 import styled from 'styled-components';
 import { ipcRenderer } from 'electron';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,14 +10,16 @@ import {
   faUndo,
   faLevelDownAlt,
   faList,
-  faDesktop
+  faDesktop,
+  faPlay
 } from '@fortawesome/free-solid-svg-icons';
 import { Slider, Button, Input, Switch, Select } from 'antd';
 import {
-  updateJava16Path,
+  updateJavaLatestPath,
   updateJavaArguments,
   updateJavaMemory,
   updateJavaPath,
+  updateMcStartupMethod,
   updateResolution
 } from '../../../reducers/settings/actions';
 import {
@@ -27,11 +28,10 @@ import {
 } from '../../../../app/desktop/utils/constants';
 import { _getJavaPath } from '../../../utils/selectors';
 import { openModal } from '../../../reducers/modals/actions';
-
-const JavaSettings = styled.div`
-  width: 100%;
-  height: 400px;
-`;
+import {
+  LATEST_JAVA_VERSION,
+  MC_STARTUP_METHODS
+} from '../../../utils/constants';
 
 const AutodetectPath = styled.div`
   display: flex;
@@ -50,6 +50,20 @@ const SelectMemory = styled.div`
 const Resolution = styled.div`
   width: 100%;
   height: 100px;
+`;
+
+const McStartupMethod = styled.div`
+  width: 100%;
+  height: 100px;
+`;
+
+const McStartupMethodRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  width: 100%;
+  height: 40px;
+  margin-bottom: 30px;
 `;
 
 const ResolutionInputContainer = styled.div`
@@ -102,27 +116,27 @@ function resetJavaArguments(dispatch) {
   dispatch(updateJavaArguments(DEFAULT_JAVA_ARGS));
 }
 
-const maxMemorySlider = Math.round(totalmem() / 1024 / 1024 / 1024) * 1024;
-
-function getMarks() {
-  const totalMarks = {};
-  const totalMemory = Math.round(totalmem() / 1024 / 1024 / 1024);
-  const b2TotalMemory = Math.floor(Math.log2(totalMemory));
-  for (let b2Counter = b2TotalMemory; b2Counter > 0; b2Counter -= 1) {
-    const mbOfRAM = 2 ** b2Counter * 1024;
-    totalMarks[mbOfRAM] = `${mbOfRAM} MB`;
-  }
-  return totalMarks;
-}
+const marks = {
+  2048: '2048 MB',
+  4096: '4096 MB',
+  8192: '8192 MB',
+  16384: '16384 MB',
+  32768: '32768 MB'
+};
 
 export default function MyAccountPreferences() {
   const [screenResolution, setScreenResolution] = useState(null);
   const javaArgs = useSelector(state => state.settings.java.args);
   const javaMemory = useSelector(state => state.settings.java.memory);
   const javaPath = useSelector(state => _getJavaPath(state)(8));
-  const java16Path = useSelector(state => _getJavaPath(state)(16));
+  const javaLatestPath = useSelector(state =>
+    _getJavaPath(state)(LATEST_JAVA_VERSION)
+  );
   const customJavaPath = useSelector(state => state.settings.java.path);
-  const customJava16Path = useSelector(state => state.settings.java.path16);
+  const customJavaLatestPath = useSelector(
+    state => state.settings.java.pathLatest
+  );
+  const mcStartupMethod = useSelector(state => state.settings.mcStartupMethod);
   const mcResolution = useSelector(
     state => state.settings.minecraftSettings.resolution
   );
@@ -136,7 +150,7 @@ export default function MyAccountPreferences() {
   }, []);
 
   return (
-    <JavaSettings>
+    <>
       <MainTitle>Java</MainTitle>
       <Title
         css={`
@@ -163,23 +177,24 @@ export default function MyAccountPreferences() {
           `}
         >
           Disable this to specify a custom java path to use instead of using
-          openJDK shipped with rPLauncher. Please select the java.exe binary
+          OpenJDK shipped with rPLauncher. If that is the case, select the path
+          to your Java executable.
         </Paragraph>
         <Switch
           color="primary"
           onChange={c => {
             if (c) {
               dispatch(updateJavaPath(null));
-              dispatch(updateJava16Path(null));
+              dispatch(updateJavaLatestPath(null));
             } else {
               dispatch(updateJavaPath(javaPath));
-              dispatch(updateJava16Path(java16Path));
+              dispatch(updateJavaLatestPath(javaLatestPath));
             }
           }}
-          checked={!customJavaPath && !customJava16Path}
+          checked={!customJavaPath && !customJavaLatestPath}
         />
       </AutodetectPath>
-      {customJavaPath && customJava16Path && (
+      {customJavaPath && customJavaLatestPath && (
         <>
           <div
             css={`
@@ -206,10 +221,16 @@ export default function MyAccountPreferences() {
               />
               <Input
                 css={`
-                  width: 75%;
-                  margin: 0 10px;
+                  width: 75% !important;
+                  margin: 0 10px !important;
                 `}
-                onChange={e => dispatch(updateJavaPath(e.target.value))}
+                onChange={e =>
+                  dispatch(
+                    updateJavaPath(
+                      e.target.value === '' ? null : e.target.value
+                    )
+                  )
+                }
                 value={customJavaPath}
               />
               <StyledButtons
@@ -238,7 +259,7 @@ export default function MyAccountPreferences() {
                 text-align: left;
               `}
             >
-              Java 16
+              Java {LATEST_JAVA_VERSION}
             </h3>
             <div
               css={`
@@ -252,11 +273,17 @@ export default function MyAccountPreferences() {
               />
               <Input
                 css={`
-                  width: 75%;
-                  margin: 0 10px;
+                  width: 75% !important;
+                  margin: 0 10px !important;
                 `}
-                onChange={e => dispatch(updateJava16Path(e.target.value))}
-                value={customJava16Path}
+                onChange={e => {
+                  dispatch(
+                    updateJavaLatestPath(
+                      e.target.value === '' ? null : e.target.value
+                    )
+                  );
+                }}
+                value={customJavaLatestPath}
               />
               <StyledButtons
                 color="primary"
@@ -266,7 +293,7 @@ export default function MyAccountPreferences() {
                     javaPath
                   );
                   if (!filePaths[0] || canceled) return;
-                  dispatch(updateJava16Path(filePaths[0]));
+                  dispatch(updateJavaLatestPath(filePaths[0]));
                 }}
               >
                 <FontAwesomeIcon icon={faFolder} />
@@ -295,7 +322,7 @@ export default function MyAccountPreferences() {
             margin: 0;
           `}
         >
-          Select the initial game resolution in pixels (width x height)
+          Select the initial game resolution in pixels (width x height).
         </Paragraph>
         <ResolutionInputContainer>
           <div>
@@ -365,20 +392,20 @@ export default function MyAccountPreferences() {
             margin: 0;
           `}
         >
-          Select the preferred amount of memory to use when launching the game
+          Select the preferred amount of memory to use when launching the game.
         </Paragraph>
         <Slider
           css={`
-            margin: 20px 20px 20px 0;
+            margin: 20px 20px 20px 0 !important;
           `}
           onAfterChange={e => {
             dispatch(updateJavaMemory(e));
           }}
           defaultValue={javaMemory}
           min={1024}
-          max={maxMemorySlider}
+          max={process.getSystemMemoryInfo().total / 1024}
           step={512}
-          marks={getMarks()}
+          marks={marks}
           valueLabelDisplay="auto"
         />
       </SelectMemory>
@@ -397,7 +424,7 @@ export default function MyAccountPreferences() {
             text-align: left;
           `}
         >
-          Select the preferred custom arguments to use when launching the game
+          Select the preferred custom arguments to use when launching the game.
         </Paragraph>
         <div
           css={`
@@ -409,9 +436,9 @@ export default function MyAccountPreferences() {
             onChange={e => dispatch(updateJavaArguments(e.target.value))}
             value={javaArgs}
             css={`
-              width: 83%;
-              height: 32px;
-              float: left;
+              width: 83% !important;
+              height: 32px !important;
+              float: left !important;
             `}
           />
           <StyledButtons
@@ -422,6 +449,38 @@ export default function MyAccountPreferences() {
           </StyledButtons>
         </div>
       </JavaCustomArguments>
-    </JavaSettings>
+      <Hr />
+      <McStartupMethod>
+        <Title
+          css={`
+            width: 70%;
+            text-align: left;
+          `}
+        >
+          Minecraft Startup Method &nbsp; <FontAwesomeIcon icon={faPlay} />
+        </Title>
+        <McStartupMethodRow>
+          <Paragraph
+            css={`
+              text-align: left;
+            `}
+          >
+            Select the preferred Minecraft startup method. Only change this if
+            you&apos;re experiencing issues with the default one.
+          </Paragraph>
+          <Select
+            value={mcStartupMethod}
+            onChange={v => dispatch(updateMcStartupMethod(v))}
+            disabled={process.platform !== 'win32'}
+          >
+            {Object.entries(MC_STARTUP_METHODS).map(([k, v]) => (
+              <Select.Option key={k} value={k}>
+                {v}
+              </Select.Option>
+            ))}
+          </Select>
+        </McStartupMethodRow>
+      </McStartupMethod>
+    </>
   );
 }

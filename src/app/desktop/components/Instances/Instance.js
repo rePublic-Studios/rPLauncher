@@ -15,7 +15,8 @@ import {
   faTrash,
   faStop,
   faBoxOpen,
-  faCopy
+  faCopy,
+  faServer
 } from '@fortawesome/free-solid-svg-icons';
 import psTree from 'ps-tree';
 import { ContextMenuTrigger, ContextMenu, MenuItem } from 'react-contextmenu';
@@ -25,7 +26,10 @@ import {
   _getInstancesPath,
   _getDownloadQueue
 } from '../../../../common/utils/selectors';
-import { launchInstance } from '../../../../common/reducers/actions';
+import {
+  addStartedInstance,
+  launchInstance
+} from '../../../../common/reducers/actions';
 import { openModal } from '../../../../common/reducers/modals/actions';
 import instanceDefaultBackground from '../../../../common/assets/instance_default.png';
 import { convertMinutesToHumanTime } from '../../../../common/utils';
@@ -182,6 +186,7 @@ const Instance = ({ instanceName }) => {
 
   const startInstance = () => {
     if (isInQueue || isPlaying) return;
+    dispatch(addStartedInstance({ instanceName }));
     dispatch(launchInstance(instanceName));
   };
   const openFolder = () => {
@@ -204,7 +209,9 @@ const Instance = ({ instanceName }) => {
     psTree(isPlaying.pid, (err, children) => {
       if (children.length) {
         children.forEach(el => {
-          process.kill(el.PID);
+          if (el) {
+            process.kill(el.PID);
+          }
         });
       } else {
         process.kill(isPlaying.pid);
@@ -284,7 +291,7 @@ const Instance = ({ instanceName }) => {
                   </div>
                 )}
                 {isInQueue && 'In Queue'}
-                {!isInQueue && !isPlaying && 'PLAY'}
+                {!isInQueue && !isPlaying && <span>PLAY</span>}
               </>
             )}
           </HoverContainer>
@@ -348,7 +355,10 @@ const Instance = ({ instanceName }) => {
             />
             Export Pack
           </MenuItem>
-          <MenuItem onClick={openDuplicateNameDialog}>
+          <MenuItem
+            disabled={Boolean(isInQueue)}
+            onClick={openDuplicateNameDialog}
+          >
             <FontAwesomeIcon
               icon={faCopy}
               css={`

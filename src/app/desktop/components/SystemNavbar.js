@@ -12,11 +12,11 @@ import {
   faDownload
 } from '@fortawesome/free-solid-svg-icons';
 import { useSelector, useDispatch } from 'react-redux';
-import { openModal } from '../../../common/reducers/modals/actions';
+import { openModal, closeModal } from '../../../common/reducers/modals/actions';
 import {
   checkForPortableUpdates,
   updateUpdateAvailable,
-  getAppLatestVersion
+  isNewVersionAvailable
 } from '../../../common/reducers/actions';
 import Logo from '../../../ui/Logo';
 
@@ -52,7 +52,7 @@ const SystemNavbar = () => {
         .then(v => dispatch(updateUpdateAvailable(Boolean(v))))
         .catch(console.error);
     } else {
-      dispatch(getAppLatestVersion())
+      dispatch(isNewVersionAvailable())
         .then(v => dispatch(updateUpdateAvailable(Boolean(v))))
         .catch(console.error);
     }
@@ -114,13 +114,18 @@ const SystemNavbar = () => {
           props.areSettingsOpen
             ? `background: ${props.theme.palette.grey[700]};`
             : null}
-        &:hover {
-          background-color: rgba(17, 25, 40, 0.85);
-          border-radius: 12px;
-        }
+            &:hover {
+              background-color: rgba(17, 25, 40, 0.85);
+              border-radius: 12px;
+            }
       `}
       onClick={() => {
-        dispatch(openModal('Settings'));
+          if(modals.filter(function(e) { return e.modalType === "Settings"; }).length > 0) {
+            dispatch(closeModal());
+          }
+          else{
+            dispatch(openModal('Settings'));
+          }
       }}
     >
       <FontAwesomeIcon icon={faCog} />
@@ -177,7 +182,7 @@ const SystemNavbar = () => {
             `}
           >
             <a
-              href="https://rp.tribbe.de/"
+              href="https://rp.tribbe.dev/"
               rel="noopener noreferrer"
               css={`
                 margin-top: 5px;
@@ -279,7 +284,7 @@ const SystemNavbar = () => {
           <div>
             <DevtoolButton />
             <a
-              href="https://rp.tribbe.de/"
+              href="https://rp.tribbe.dev/"
               rel="noopener noreferrer"
               css={`
                 margin-top: 5px;
@@ -306,6 +311,7 @@ const MainContainer = styled.div`
   justify-content: space-between;
   position: relative;
   z-index: 100000;
+  top: 2.5px;
   & > * {
     height: 100%;
     display: flex;

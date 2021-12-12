@@ -3,16 +3,13 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import path from 'path';
 import fse from 'fs-extra';
-import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
 import { promises as fs } from 'fs';
-import { extractFull } from 'node-7z';
-import { get7zPath, isMod } from '../../../app/desktop/utils';
+import { extractAll } from '../../../app/desktop/utils';
 import { ipcRenderer } from 'electron';
-import { Button, Input, Switch } from 'antd';
+import { Button, Input } from 'antd';
 import { _getTempPath } from '../../utils/selectors';
 import { useSelector } from 'react-redux';
-import { getAddon, getAddonFiles } from '../../api';
+import { getAddon } from '../../api';
 import { downloadFile } from '../../../app/desktop/utils/downloader';
 import { CURSEFORGE, FABRIC, FORGE, VANILLA } from '../../utils/constants';
 import { transparentize } from 'polished';
@@ -22,11 +19,9 @@ const Import = ({
   setVersion,
   importZipPath,
   setImportZipPath,
-  setImportUpdate,
   setOverrideNextStepOnClick
 }) => {
   const [localValue, setLocalValue] = useState(null);
-  const [updateChecked, setUpdateChecked] = useState(false);
   const tempPath = useSelector(_getTempPath);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -38,10 +33,7 @@ const Import = ({
   useEffect(() => {
     setImportZipPath(localValue?.length > 0 ? localValue : null);
     setVersion(null);
-
-    if (updateChecked) setImportUpdate(localValue);
-    else setImportUpdate('');
-  }, [localValue, updateChecked]);
+  }, [localValue]);
 
   const openFileDialog = async () => {
     const dialog = await ipcRenderer.invoke('openFileDialog');
@@ -53,10 +45,10 @@ const Import = ({
     if (loading || !localValue) return;
     setLoading(true);
     const urlRegex =
-      /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/;
+      /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*).zip$/;
     const isUrlRegex = urlRegex.test(localValue);
-    const hash = uuidv4();
-    let tempFilePath = path.join(tempPath, `${hash}.zip`);
+
+    const tempFilePath = path.join(tempPath, path.basename(localValue));
 
     if (isUrlRegex) {
       try {
@@ -72,38 +64,28 @@ const Import = ({
         setLoading(false);
         throw err;
       }
-    } else {
-      setImportUpdate('');
     }
 
-    const sevenZipPath = await get7zPath();
     try {
       await fs.access(path.join(tempPath, 'manifest.json'));
     } catch {
       await fse.remove(path.join(tempPath, 'manifest.json'));
     }
-
-    const extraction = extractFull(
+    await extractAll(
       isUrlRegex ? tempFilePath : localValue,
       tempPath,
       {
         recursive: true,
-        $bin: sevenZipPath,
         yes: true,
         $cherryPick: 'manifest.json'
+      },
+      {
+        error: () => {
+          setError(true);
+          setLoading(false);
+        }
       }
     );
-
-    await new Promise((resolve, reject) => {
-      extraction.on('end', () => {
-        resolve();
-      });
-      extraction.on('error', err => {
-        setError(true);
-        setLoading(false);
-        reject(err.stderr);
-      });
-    });
     const manifest = await fse.readJson(path.join(tempPath, 'manifest.json'));
     await fse.remove(path.join(tempPath, 'manifest.json'));
     let addon = null;
@@ -172,27 +154,13 @@ const Import = ({
             value={localValue}
             onChange={e => setLocalValue(e.target.value)}
             css={`
-              width: 400px;
-              margin-right: 10px;
+              width: 400px !important;
+              margin-right: 10px !important;
             `}
           />
           <Button disabled={loading} type="primary" onClick={openFileDialog}>
             Browse
-          </Button>{' '}
-        </div>
-        <div
-          css={`
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-          `}
-        >
-          Check for update during launch the instance
-          <Switch
-            onChange={checked => {
-              setUpdateChecked(checked);
-            }}
-          />
+          </Button>
         </div>
         <div
           show={error}

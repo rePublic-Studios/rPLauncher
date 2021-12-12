@@ -1,8 +1,8 @@
 import React, { useState, useEffect, memo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { totalmem } from 'os';
 import fss from 'fs-extra';
 import path from 'path';
+import os from 'os';
 import omit from 'lodash/omit';
 import { useDebouncedCallback } from 'use-debounce';
 import styled from 'styled-components';
@@ -25,7 +25,10 @@ import {
   DEFAULT_JAVA_ARGS,
   resolutionPresets
 } from '../../../app/desktop/utils/constants';
-import { updateInstanceConfig } from '../../reducers/actions';
+import {
+  getJavaVersionForMCVersion,
+  updateInstanceConfig
+} from '../../reducers/actions';
 import { openModal } from '../../reducers/modals/actions';
 import { convertMinutesToHumanTime } from '../../utils';
 import { CURSEFORGE } from '../../utils/constants';
@@ -93,7 +96,7 @@ const JavaManagerRow = styled.div`
 `;
 
 const JavaMemorySlider = styled(Slider)`
-  margin: 30px 0 55px 0;
+  margin: 30px 10px 55px 0 !important;
 `;
 
 const JavaResetButton = styled(Button)`
@@ -116,11 +119,11 @@ const ResolutionInputContainer = styled.div`
   }
 `;
 
-const maxMemorySlider = Math.round(totalmem() / 1024 / 1024 / 1024) * 1024;
+const maxMemorySlider = Math.round(os.totalmem() / 1024 / 1024 / 1024) * 1024;
 
 function getMarks() {
   const totalMarks = {};
-  const totalMemory = Math.round(totalmem() / 1024 / 1024 / 1024);
+  const totalMemory = Math.round(os.totalmem() / 1024 / 1024 / 1024);
   const b2TotalMemory = Math.floor(Math.log2(totalMemory));
   for (let b2Counter = b2TotalMemory; b2Counter > 0; b2Counter -= 1) {
     const mbOfRAM = 2 ** b2Counter * 1024;
@@ -180,9 +183,15 @@ const Card = memo(
 );
 
 const Overview = ({ instanceName, background, manifest }) => {
+  const dispatch = useDispatch();
   const instancesPath = useSelector(_getInstancesPath);
   const config = useSelector(state => _getInstance(state)(instanceName));
-  const defaultJavaPath = useSelector(state => _getJavaPath(state));
+  const javaVersion = dispatch(
+    getJavaVersionForMCVersion(config?.loader?.mcVersion)
+  );
+  const defaultJavaPath = useSelector(state =>
+    _getJavaPath(state)(javaVersion)
+  );
   const [javaLocalMemory, setJavaLocalMemory] = useState(config?.javaMemory);
   const [javaLocalArguments, setJavaLocalArguments] = useState(
     config?.javaArgs
@@ -192,12 +201,6 @@ const Overview = ({ instanceName, background, manifest }) => {
   const [screenResolution, setScreenResolution] = useState(null);
   const [height, setHeight] = useState(config?.resolution?.height);
   const [width, setWidth] = useState(config?.resolution?.width);
-  const [downloadInstanceZip, setDownloadInstanceZip] = useState(
-    config?.downloadInstanceZip
-  );
-  const [zipUrl, setZipUrl] = useState(config?.zipUrl);
-
-  const dispatch = useDispatch();
 
   useEffect(() => {
     ipcRenderer
@@ -272,28 +275,6 @@ const Overview = ({ instanceName, background, manifest }) => {
     fss.rename(
       path.join(instancesPath, instanceName),
       path.join(instancesPath, newName)
-    );
-  };
-
-  const debouncedZipUrlUpdate = useDebouncedCallback(
-    v => {
-      dispatch(
-        updateInstanceConfig(instanceName, prev => ({
-          ...prev,
-          zipUrl: v
-        }))
-      );
-    },
-    400,
-    { maxWait: 700, leading: false }
-  );
-
-  const updateDownloadInstanceZip = v => {
-    dispatch(
-      updateInstanceConfig(instanceName, prev => ({
-        ...prev,
-        downloadInstanceZip: v
-      }))
     );
   };
 
@@ -567,7 +548,7 @@ const Overview = ({ instanceName, background, manifest }) => {
             </JavaManagerRow>
           )}
           <JavaManagerRow>
-            <div>Custom Java Path</div>
+            <div>Custom Java Path {`<Java ${javaVersion}>`} </div>
             <Switch
               checked={customJavaPath}
               onChange={v => {
@@ -612,25 +593,6 @@ const Overview = ({ instanceName, background, manifest }) => {
                 <FontAwesomeIcon icon={faUndo} />
               </JavaResetButton>
             </JavaManagerRow>
-          )}
-          <JavaManagerRow>
-            <div>Update instance upon launching</div>
-            <Switch
-              checked={downloadInstanceZip}
-              onChange={v => {
-                setDownloadInstanceZip(v);
-                updateDownloadInstanceZip(v);
-              }}
-            />
-          </JavaManagerRow>
-          {downloadInstanceZip && (
-            <Input
-              value={zipUrl}
-              onChange={e => {
-                setZipUrl(e.target.value);
-                debouncedZipUrlUpdate(e.target.value);
-              }}
-            />
           )}
         </OverviewCard>
       </Column>

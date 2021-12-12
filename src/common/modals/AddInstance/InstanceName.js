@@ -24,7 +24,6 @@ import {
 import { _getInstancesPath, _getTempPath } from '../../utils/selectors';
 import bgImage from '../../assets/mcCube.jpg';
 import { downloadFile } from '../../../app/desktop/utils/downloader';
-import { instanceNameSuffix } from '../../../app/desktop/utils';
 import { FABRIC, VANILLA, FORGE, FTB, CURSEFORGE } from '../../utils/constants';
 import { getFTBModpackVersionData } from '../../api';
 
@@ -36,7 +35,6 @@ const InstanceName = ({
   setVersion,
   setModpack,
   importZipPath,
-  importUpdate,
   step
 }) => {
   const mcName = (
@@ -49,10 +47,8 @@ const InstanceName = ({
   const dispatch = useDispatch();
   const instancesPath = useSelector(_getInstancesPath);
   const tempPath = useSelector(_getTempPath);
-  const instances = useSelector(state => state.instances.list);
   const forgeManifest = useSelector(state => state.app.forgeManifest);
   const [instanceName, setInstanceName] = useState(mcName);
-  const [instanceNameSufx, setInstanceNameSufx] = useState(null);
   const [alreadyExists, setAlreadyExists] = useState(false);
   const [invalidName, setInvalidName] = useState(true);
   const [clicked, setClicked] = useState(false);
@@ -71,11 +67,8 @@ const InstanceName = ({
         return;
       }
       fse
-        .pathExists(path.join(instancesPath, instanceName || mcName)) // todo make case insensitiv
+        .pathExists(path.join(instancesPath, instanceName || mcName))
         .then(exists => {
-          const newName = instanceNameSuffix(instanceName || mcName, instances);
-          setInstanceNameSufx(newName);
-
           setAlreadyExists(exists);
           setInvalidName(false);
         });
@@ -108,13 +101,12 @@ const InstanceName = ({
 
     const initTimestamp = Date.now();
 
-    const isVanilla = version?.loaderType === VANILLA;
-    const isFabric = version?.loaderType === FABRIC;
-    const isForge = version?.loaderType === FORGE;
     const isCurseForgeModpack = Boolean(modpack?.attachments);
     const isFTBModpack = Boolean(modpack?.art);
     let manifest;
 
+    // If it's a curseforge modpack grab the manfiest and detect the loader
+    // type as we don't yet know what it is.
     if (isCurseForgeModpack) {
       if (importZipPath) {
         manifest = await importAddonZip(
@@ -132,6 +124,28 @@ const InstanceName = ({
         );
       }
 
+      const isForgeModpack = (manifest?.minecraft?.modLoaders || []).some(
+        v => v.id.includes(FORGE) && v.primary
+      );
+
+      const isFabricModpack = (manifest?.minecraft?.modLoaders || []).some(
+        v => v.id.includes(FABRIC) && v.primary
+      );
+
+      if (isForgeModpack) {
+        version.loaderType = FORGE;
+      } else if (isFabricModpack) {
+        version.loaderType = FABRIC;
+      } else {
+        version.loaderType = VANILLA;
+      }
+    }
+
+    const isVanilla = version?.loaderType === VANILLA;
+    const isFabric = version?.loaderType === FABRIC;
+    const isForge = version?.loaderType === FORGE;
+
+    if (isCurseForgeModpack) {
       if (imageURL) {
         await downloadFile(
           path.join(
@@ -143,12 +157,12 @@ const InstanceName = ({
         );
       }
 
-      if (version?.loaderType === FORGE) {
+      if (isForge) {
         const loader = {
-          loaderType: version?.loaderType,
+          loaderType: FORGE,
           mcVersion: manifest.minecraft.version,
           loaderVersion: convertcurseForgeToCanonical(
-            manifest.minecraft.modLoaders?.find(v => v.primary).id,
+            manifest.minecraft.modLoaders.find(v => v.primary).id,
             manifest.minecraft.version,
             forgeManifest
           ),
@@ -163,26 +177,15 @@ const InstanceName = ({
             localInstanceName,
             loader,
             manifest,
-            imageURL ? `background${path.extname(imageURL)}` : null,
-            0,
-            importUpdate !== ''
-              ? { zipUrl: importUpdate, downloadInstanceZip: true }
-              : {}
+            imageURL ? `background${path.extname(imageURL)}` : null
           )
         );
-      } else if (version?.loaderType === FABRIC) {
-        // Backwards compatability for manifest entries that use the `yarn`
-        // property to set the fabric loader version. Newer manifests use the
-        // format `fabric-<version>` in the id.
-        let loaderVersion = manifest.minecraft.modLoaders[0].yarn;
-        if (!loaderVersion) {
-          loaderVersion = manifest.minecraft.modLoaders[0].id.split('-', 2)[1];
-        }
+      } else if (isFabric) {
         const loader = {
-          loaderType: version?.loaderType,
+          loaderType: FABRIC,
           mcVersion: manifest.minecraft.version,
-          loaderVersion,
-          fileID: manifest.minecraft.modLoaders[0].loader,
+          loaderVersion: extractFabricVersionFromManifest(manifest),
+          fileID: version?.fileID,
           projectID: version?.projectID,
           source: version?.source,
           sourceName: manifest.name
@@ -192,16 +195,12 @@ const InstanceName = ({
             localInstanceName,
             loader,
             manifest,
-            imageURL ? `background${path.extname(imageURL)}` : null,
-            0,
-            importUpdate !== ''
-              ? { zipUrl: importUpdate, downloadInstanceZip: true }
-              : {}
+            imageURL ? `background${path.extname(imageURL)}` : null
           )
         );
-      } else if (version?.loaderType === VANILLA) {
+      } else if (isVanilla) {
         const loader = {
-          loaderType: version?.loaderType,
+          loaderType: VANILLA,
           mcVersion: manifest.minecraft.version,
           loaderVersion: version?.loaderVersion,
           fileID: version?.fileID
@@ -212,11 +211,7 @@ const InstanceName = ({
             localInstanceName,
             loader,
             manifest,
-            imageURL ? `background${path.extname(imageURL)}` : null,
-            0,
-            importUpdate !== ''
-              ? { zipUrl: importUpdate, downloadInstanceZip: true }
-              : {}
+            imageURL ? `background${path.extname(imageURL)}` : null
           )
         );
       }
@@ -301,6 +296,8 @@ const InstanceName = ({
         tempPath
       );
 
+      let loader = {};
+
       if (version?.loaderType === FORGE) {
         Object.assign(loader, {
           loaderType: version?.loaderType,
@@ -327,6 +324,7 @@ const InstanceName = ({
           loaderType: version?.loaderType,
           mcVersion: manifest.minecraft.version
         });
+
         dispatch(addToQueue(localInstanceName, loader, manifest));
       }
     } else if (isVanilla) {
@@ -419,27 +417,20 @@ const InstanceName = ({
                     <Input
                       state={state1}
                       size="large"
-                      placeholder={instanceNameSufx || instanceName || mcName}
-                      onChange={async e => {
-                        const newName = instanceNameSuffix(
-                          e.target.value,
-                          instances
-                        );
-                        setInstanceName(newName);
-                      }}
+                      placeholder={mcName}
+                      onChange={e => setInstanceName(e.target.value)}
                       css={`
                         opacity: ${({ state }) =>
                           state === 'entering' || state === 'entered'
                             ? 0
                             : 1} !important;
-                        transition: 0.1s ease-in-out;
-                        width: 300px;
-                        align-self: center;
+                        transition: 0.1s ease-in-out !important;
+                        width: 300px !important;
+                        align-self: center !important;
                       `}
                     />
                     <div
                       show={invalidName || alreadyExists}
-                      show={!instanceNameSufx && (invalidName || alreadyExists)}
                       css={`
                         opacity: ${props => (props.show ? 1 : 0)};
                         color: ${props => props.theme.palette.error.main};
@@ -481,13 +472,11 @@ const InstanceName = ({
                     }
                   `}
                   onClick={() => {
-                    createInstance(instanceNameSufx || instanceName || mcName);
+                    createInstance(instanceName || mcName);
                     setClicked(true);
                   }}
                 >
-                  {clicked ||
-                  (alreadyExists && !instanceNameSufx) ||
-                  invalidName ? (
+                  {clicked || alreadyExists || invalidName ? (
                     ''
                   ) : (
                     <FontAwesomeIcon icon={faLongArrowAltRight} />

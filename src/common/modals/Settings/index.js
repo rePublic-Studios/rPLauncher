@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, lazy } from 'react';
 import styled from 'styled-components';
 import { Button } from 'antd';
 import { useDispatch } from 'react-redux';
 import Modal from '../../components/Modal';
-import General from './components/General';
-import Java from './components/Java';
-import GameSetting from './components/GameSettings';
-import VideoSetting from './components/VideoSettings';
-import SoundSetting from './components/SoundSettings';
+import AsyncComponent from '../../components/AsyncComponent';
 import CloseButton from '../../components/CloseButton';
-import { closeModal } from '../../reducers/modals/actions';
+import SocialButtons from '../../components/SocialButtons';
+import { closeModal, openModal } from '../../reducers/modals/actions';
 
 const Container = styled.div`
   display: flex;
@@ -17,10 +14,15 @@ const Container = styled.div`
   width: 100%;
   height: 100%;
   text-align: center;
+
+  .ant-slider-mark-text,
+  .ant-input,
+  .ant-select-selection-search-input,
+  .ant-btn {
+    -webkit-backface-visibility: hidden;
+  }
 `;
 const SideMenu = styled.div`
-  flex: 0;
-  flex-grow: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -93,36 +95,43 @@ const SettingsTitle = styled.div`
   color: ${props => props.theme.palette.grey[50]};
 `;
 
-function Page(page) {
-  switch (page) {
-    case 'General':
-      return <General />;
-    case 'Java':
-      return <Java />;
-    case 'GameSetting':
-      return <GameSetting />;
-    case 'VideoSetting':
-      return <VideoSetting />;
-    case 'SoundSetting':
-      return <SoundSetting />;
-    default:
-      return null;
+const pages = {
+  General: {
+    name: 'General',
+    component: AsyncComponent(lazy(() => import('./components/General')))
+  },
+  Java: {
+    name: 'Java',
+    component: AsyncComponent(lazy(() => import('./components/Java')))
+  },
+  GameSetting: {
+    name: 'GameSetting',
+    component: AsyncComponent(lazy(() => import('./components/GameSetting')))
+  },
+  VideoSetting: {
+    name: 'VideoSetting',
+    component: AsyncComponent(lazy(() => import('./components/VideoSetting')))
+  },
+  SoundSetting: {
+    name: 'SoundSetting',
+    component: AsyncComponent(lazy(() => import('./components/SoundSetting')))
   }
-}
+};
 
 export default function Settings() {
   const [page, setPage] = useState('General');
   const dispatch = useDispatch();
+  const ContentComponent = pages[page].component;
+
   return (
     <Modal
       css={`
         backdrop-filter: blur(16px) saturate(180%);
-        height: 90%;
-        width: 95%;
+        height: 100%;
+        width: 98%;
         background-color: rgba(0, 0, 0, 0.15);
         border-radius: 12px;
         border: 1px solid rgba(255, 255, 255, 0.125);
-        top: 8%;
       `}
       header="false"
     >
@@ -137,51 +146,96 @@ export default function Settings() {
         />
         <SideMenu>
           <SettingsTitle>General</SettingsTitle>
-          <SettingsButton
-            active={page === 'General'}
-            onClick={() => setPage('General')}
-          >
-            General
+          {Object.values(pages).map(val => (
+            <SettingsButton
+              key={val.name}
+              active={page === val.name}
+              onClick={() => setPage(val.name)}
+            >
+              {val.name}
+            </SettingsButton>
+          ))}
+          {/* <SettingsButton onClick={() => setPage("User Interface")}>
+            User Interface
           </SettingsButton>
-          <SettingsButton
-            active={page === 'Java'}
-            onClick={() => setPage('Java')}
+          <SettingsTitle>Game Settings</SettingsTitle>
+          <SettingsButton>Graphic Settings</SettingsButton>
+          <SettingsButton>Sound Settings</SettingsButton> */}
+          <div
+            css={`
+              align-items: left;
+              justify-content: left;
+              text-align: left;
+              width: 200px;
+              position: absolute;
+              bottom: 0;
+              margin-bottom: 30px;
+            `}
           >
-            Java
-          </SettingsButton>
-
-          <SettingsTitle>Minecraft</SettingsTitle>
-          <SettingsButton
-            active={page === 'GameSetting'}
-            onClick={() => setPage('GameSetting')}
-          >
-            Game Settings
-          </SettingsButton>
-
-          <SettingsButton
-            active={page === 'VideoSetting'}
-            onClick={() => setPage('VideoSetting')}
-          >
-            Video Settings
-          </SettingsButton>
-
-          <SettingsButton
-            active={page === 'SoundSetting'}
-            onClick={() => setPage('SoundSetting')}
-          >
-            Sound Settings
-          </SettingsButton>
+            <span
+              css={`
+                font-weight: bold;
+                font-size: 16px;
+              `}
+            >
+              Support rPLauncher
+            </span>
+            <div
+              css={`
+                margin-top: 20px;
+              `}
+            >
+              <SocialButtons />
+            </div>
+            <div
+              css={`
+                margin-top: 20px;
+                display: flex;
+                font-size: 10px;
+                flex-direction: column;
+                span {
+                  text-decoration: underline;
+                  cursor: pointer;
+                }
+              `}
+            >
+              <span
+                onClick={() =>
+                  dispatch(openModal('PolicyModal', { policy: 'privacy' }))
+                }
+              >
+                Privacy Policy
+              </span>
+              <span
+                onClick={() =>
+                  dispatch(openModal('PolicyModal', { policy: 'tos' }))
+                }
+              >
+                Terms and Conditions
+              </span>
+              <span
+                onClick={() =>
+                  dispatch(
+                    openModal('PolicyModal', { policy: 'acceptableuse' })
+                  )
+                }
+              >
+                Acceptable Use Policy
+              </span>
+            </div>
+          </div>
         </SideMenu>
         <SettingsContainer>
           <SettingsColumn>
             <div
               css={`
-                max-width: 600px;
+                max-width: 88%;
                 overflow-y: hidden;
                 overflow-x: hidden;
+                padding-bottom: 20px;
               `}
             >
-              {Page(page)}
+              <ContentComponent />
             </div>
           </SettingsColumn>
         </SettingsContainer>

@@ -111,9 +111,9 @@ const ProfileSettings = () => {
                         color: ${props => props.theme.palette.error.main};
                       `}
                     >
-                      {!account.accessToken &&
-                        account.accountType !== ACCOUNT_LOCAL &&
-                        ' (EXPIRED)'}
+                    {!account.accessToken &&
+                      account.accountType !== ACCOUNT_LOCAL &&
+                      ' (EXPIRED)'}
                     </span>
                   </div>
                   {!account.accessToken &&
@@ -129,10 +129,10 @@ const ProfileSettings = () => {
                             })
                           );
                         }}
-                      >
-                        Login again
-                      </HoverContainer>
-                    )}
+                    >
+                      Login again
+                    </HoverContainer>
+                  )}
                   {isCurrentAccount && (
                     <Spin spinning={isLoading.isRequesting} />
                   )}
@@ -257,7 +257,7 @@ const AccountItem = styled.div`
   align-items: center;
   position: relative;
   flex: 1;
-  justify-content: center;
+  justify-content: space-between;
   height: 40px;
   padding: 0 10px;
   color: white;
@@ -270,7 +270,6 @@ const AccountItem = styled.div`
     ${props =>
       props.active ? '' : `background: ${props.theme.palette.grey[600]};`}
   }
-  align-content: space-around;
 `;
 
 const HoverContainer = styled.div`
@@ -298,6 +297,8 @@ const HoverContainer = styled.div`
 const AccountsContainer = styled.div`
   width: 100%;
   height: 100%;
+  overflow: auto;
+  padding-right: 2px;
 `;
 
 const AccountContainer = styled.div`

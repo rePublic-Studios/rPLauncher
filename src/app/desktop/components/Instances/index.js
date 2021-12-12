@@ -1,14 +1,8 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import styled from 'styled-components';
-import { useDispatch, useSelector } from 'react-redux';
-import { ipcRenderer } from 'electron';
-import { useDidMount } from 'rooks';
+import { useSelector } from 'react-redux';
 import { _getInstances } from '../../../../common/utils/selectors';
 import Instance from './Instance';
-import {
-  launchInstance,
-  setHasStartedCliInstance
-} from '../../../../common/reducers/actions';
 
 const Container = styled.div`
   display: flex;
@@ -39,55 +33,42 @@ const sortByLastPlayed = instances =>
 const sortByMostPlayed = instances =>
   instances.sort((a, b) => (a.timePlayed < b.timePlayed ? 1 : -1));
 
-const getInstances = () => {
+const getInstances = (instances, sortOrder) => {
   // Data normalization for missing fields
-  const instances = useSelector(_getInstances).map(instance => {
+  const inst = instances.map(instance => {
     return {
       ...instance,
       timePlayed: instance.timePlayed || 0,
       lastPlayed: instance.lastPlayed || 0
     };
   });
-  const instanceSortOrder = useSelector(
-    state => state.settings.instanceSortOrder
-  );
 
-  switch (instanceSortOrder) {
+  switch (sortOrder) {
     case 0:
-      return sortAlphabetical(instances);
+      return sortAlphabetical(inst);
     case 1:
-      return sortByLastPlayed(instances);
+      return sortByLastPlayed(inst);
     case 2:
-      return sortByMostPlayed(instances);
+      return sortByMostPlayed(inst);
     default:
-      return instances;
+      return inst;
   }
 };
 
 const Instances = () => {
-  const instances = getInstances();
-
-  const hasStartedCliInstance = useSelector(
-    state => state.hasStartedCliInstance
+  const instanceSortOrder = useSelector(
+    state => state.settings.instanceSortOrder
   );
-  const dispatch = useDispatch();
-
-  useDidMount(async () => {
-    if (hasStartedCliInstance) return;
-    const instanceToLaunch = await ipcRenderer.invoke('get-instance-cli-arg');
-    if (
-      instanceToLaunch &&
-      instances.find(instance => instance.name === instanceToLaunch)
-    ) {
-      dispatch(setHasStartedCliInstance(true));
-      dispatch(launchInstance(instanceToLaunch));
-    }
-  });
+  const instances = useSelector(_getInstances);
+  const memoInstances = useMemo(
+    () => getInstances(instances || [], instanceSortOrder),
+    [instances, instanceSortOrder]
+  );
 
   return (
     <Container>
-      {instances.length > 0 ? (
-        instances.map(i => <Instance key={i.name} instanceName={i.name} />)
+      {memoInstances.length > 0 ? (
+        memoInstances.map(i => <Instance key={i.name} instanceName={i.name} />)
       ) : (
         <NoInstance>
           No Instance has been installed

@@ -13,7 +13,8 @@ import { exec, spawn } from 'child_process';
 import {
   MC_LIBRARIES_URL,
   FABRIC,
-  FORGE
+  FORGE,
+  LATEST_JAVA_VERSION
 } from '../../../common/utils/constants';
 
 import {
@@ -111,7 +112,7 @@ export const librariesMapper = (libraries, librariesPath) => {
       .filter(v => !skipLibrary(v))
       .reduce((acc, lib) => {
         const tempArr = [];
-        // Normal libs
+        // Forge libs
         if (lib.downloads && lib.downloads.artifact) {
           let { url } = lib.downloads.artifact;
           // Handle special case for forge universal where the url is "".
@@ -158,7 +159,54 @@ export const librariesMapper = (libraries, librariesPath) => {
             ...(native && { natives: true })
           });
         }
-        return acc.concat(tempArr);
+        
+        // Patch log4j versions https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-44228
+        for (const k in tempArr) {
+          if (lib?.name?.includes('log4j')) {
+            // Get rid of all log4j aside from official
+            if (!tempArr[k].url.includes('libraries.minecraft.net')) {
+              tempArr[k] = null;
+              continue;
+            }
+
+            if (lib.name.includes('2.0-beta9')) {
+              tempArr[k] = {
+                url: tempArr[k].url
+                  .replace(
+                    'libraries.minecraft.net',
+                    'cdn.assets-gdevs.com/maven'
+                  )
+                  .replace(/2.0-beta9/g, '2.0-beta9-fixed'),
+                path: tempArr[k].path.replace(/2.0-beta9/g, '2.0-beta9-fixed'),
+                sha1: tempArr[k].url.includes('log4j-api')
+                  ? 'b61eaf2e64d8b0277e188262a8b771bbfa1502b3'
+                  : '677991ea2d7426f76309a73739cecf609679492c'
+              };
+            } else {
+              const log4jLib = tempArr[k].url.includes('log4j-api')
+                ? 'log4j-api'
+                : 'log4j-core';
+
+              const splitName = lib.name.split(':');
+              splitName[splitName.length - 1] = '2.15.0';
+              const patchedName = splitName.join(':');
+
+              // Assuming we can use 2.15
+              tempArr[k] = {
+                url: `https://cdn.assets-gdevs.com/maven/org/apache/logging/log4j/${log4jLib}/2.15.0/${log4jLib}-2.15.0.jar`,
+                path: path.join(
+                  librariesPath,
+                  ...mavenToArray(patchedName, native)
+                ),
+                sha1: tempArr[k].url.includes('log4j-api')
+                  ? '42319af9991a86b4475ab3316633a3d03e2d29e1'
+                  : '9bd89149d5083a2a3ab64dcc88b0227da14152ec'
+              };
+            }
+          }
+        }
+
+        return acc.concat(tempArr.filter(_ => _));
       }, []),
     'url'
   );
@@ -270,16 +318,21 @@ export const isLatestJavaDownloaded = async (
   meta,
   userData,
   retry,
-  version
+  version = 8
 ) => {
   const javaOs = convertOSToJavaFormat(process.platform);
+  let log = null;
 
-  const isJava8 = version === 16;
+  const isJavaLatest = version === LATEST_JAVA_VERSION;
 
-  const manifest = isJava8 ? meta.java16 : meta.java;
-  if (!manifest) return false;
-  const javaMeta = manifest.find(v => v.os === javaOs);
-  if (!javaMeta) return false;
+  const manifest = isJavaLatest ? meta.javaLatest : meta.java;
+
+  const javaMeta = manifest.find(
+    v =>
+      v.os === javaOs &&
+      v.architecture === 'x64' &&
+      (v.binary_type === 'jre' || v.binary_type === 'jdk')
+  );
   const javaFolder = path.join(
     userData,
     'java',
@@ -295,10 +348,8 @@ export const isLatestJavaDownloaded = async (
   );
   try {
     await fs.access(javaFolder);
-    await promisify(exec)(`"${javaExecutable}" -version`);
+    log = await promisify(exec)(`"${javaExecutable}" -version`);
   } catch (err) {
-    console.log(err);
-
     if (retry) {
       if (process.platform !== 'win32') {
         try {
@@ -309,62 +360,90 @@ export const isLatestJavaDownloaded = async (
         }
       }
 
-      return isLatestJavaDownloaded(meta, userData, false, version);
+      return isLatestJavaDownloaded(meta, userData, null, version);
     }
 
     isValid = false;
   }
-  return isValid;
+  // Return stderr because that garbage of a language which is java
+  // outputs the result of the version command to the error stream
+  // https://stackoverflow.com/questions/13483443/why-does-java-version-go-to-stderr
+  return { isValid, log: log?.stderr };
 };
 
 export const get7zPath = async () => {
   // Get userData from ipc because we can't always get this from redux
-  const baseDir = await ipcRenderer.invoke('getUserData');
-  if (process.platform === 'darwin' || process.platform === 'linux') {
+  let baseDir = await ipcRenderer.invoke('getExecutablePath');
+  const isDev = process.env.NODE_ENV === 'development';
+  if (isDev) {
+    baseDir = path.resolve(baseDir, '../../');
+    if (process.platform === 'win32') {
+      baseDir = path.join(baseDir, '7zip-bin/win/x64');
+    } else if (process.platform === 'linux') {
+      baseDir = path.join(baseDir, '7zip-bin/linux/x64');
+    } else if (process.platform === 'darwin') {
+      baseDir = path.resolve(baseDir, '../../../', '7zip-bin/mac/x64');
+    }
+  }
+  if (process.platform === 'linux') {
     return path.join(baseDir, '7za');
+  }
+  if (process.platform === 'darwin') {
+    return path.resolve(baseDir, isDev ? '' : '../', '7za');
   }
   return path.join(baseDir, '7za.exe');
 };
 
+get7zPath();
+
+export const extractAll = async (
+  source,
+  destination,
+  args = {},
+  funcs = {}
+) => {
+  const sevenZipPath = await get7zPath();
+  const extraction = extractFull(source, destination, {
+    ...args,
+    yes: true,
+    $bin: sevenZipPath,
+    $spawnOptions: { shell: true }
+  });
+  let extractedParentDir = null;
+  await new Promise((resolve, reject) => {
+    if (funcs.progress) {
+      extraction.on('progress', ({ percent }) => {
+        funcs.progress(percent);
+      });
+    }
+    extraction.on('data', data => {
+      if (!extractedParentDir) {
+        [extractedParentDir] = data.file.split('/');
+      }
+    });
+    extraction.on('end', () => {
+      funcs.end?.();
+      resolve(extractedParentDir);
+    });
+    extraction.on('error', err => {
+      funcs.error?.();
+      reject(err);
+    });
+  });
+  return { extraction, extractedParentDir };
+};
+
 export const extractNatives = async (libraries, instancePath) => {
   const extractLocation = path.join(instancePath, 'natives');
-  const sevenZipPath = await get7zPath();
   await Promise.all(
     libraries
       .filter(l => l.natives)
       .map(async l => {
-        const extraction = extractFull(l.path, extractLocation, {
-          $bin: sevenZipPath,
+        await extractAll(l.path, extractLocation, {
           $raw: ['-xr!META-INF']
-        });
-        await new Promise((resolve, reject) => {
-          extraction.on('end', () => {
-            resolve();
-          });
-          extraction.on('error', err => {
-            reject(err);
-          });
         });
       })
   );
-};
-
-export const instanceNameSuffix = (name, instancesList) => {
-  const match = name.match(/^(.+ - copy )(\((\d+)\))$/);
-  const instancesArrayList = Object.keys(instancesList);
-
-  if (name && !instancesArrayList.includes(name)) {
-    return name;
-  }
-  const newName =
-    match && match[3] !== '5'
-      ? `${match[1]}(${parseInt(match[3], 10) + 1})`
-      : `${name} - copy (1)`;
-
-  if (newName && !instancesArrayList.includes(newName)) {
-    return newName;
-  }
-  return instanceNameSuffix(newName, instancesArrayList);
 };
 
 export const copyAssetsToResources = async assets => {
@@ -377,19 +456,6 @@ export const copyAssetsToResources = async assets => {
         await fs.copyFile(asset.path, asset.resourcesPath);
       }
     })
-  );
-};
-
-export const duplicateInstance = async (
-  folderPath,
-  instancesPath,
-  newInstanceName
-) => {
-  const name = path.basename(folderPath);
-  const newName = await instanceNameSuffix(name, instancesPath);
-  await fse.copy(
-    folderPath,
-    path.join(folderPath, '..', newInstanceName || newName)
   );
 };
 
@@ -439,6 +505,8 @@ export const getJVMArguments112 = (
   args.push(...jvmOptions);
   args.push(`-Djava.library.path="${path.join(instancePath, 'natives')}"`);
   args.push(`-Dminecraft.applet.TargetDirectory="${instancePath}"`);
+  // Temporary fix to mitigate log4j security issue (possibly fixed in https://github.com/apache/logging-log4j2/pull/608)
+  args.push(`-Dlog4j2.formatMsgNoLookups=true`);
 
   args.push(mcJson.mainClass);
 
@@ -528,6 +596,8 @@ export const getJVMArguments113 = (
   args.push(`-Xmx${memory}m`);
   args.push(`-Xms${memory}m`);
   args.push(`-Dminecraft.applet.TargetDirectory="${instancePath}"`);
+  // Temporary fix to mitigate log4j security issue (possibly fixed in https://github.com/apache/logging-log4j2/pull/608)
+  args.push(`-Dlog4j2.formatMsgNoLookups=true`);
   args.push(...jvmOptions);
 
   // Eventually inject additional arguments (from 1.17 (?))
@@ -625,20 +695,10 @@ export const getJVMArguments113 = (
   return args;
 };
 
-export const readJarManifest = async (jarPath, sevenZipPath, property) => {
-  const list = extractFull(jarPath, '.', {
-    $bin: sevenZipPath,
+export const readJarManifest = async (jarPath, property) => {
+  const { extraction: list } = await extractAll(jarPath, '.', {
     toStdout: true,
     $cherryPick: 'META-INF/MANIFEST.MF'
-  });
-
-  await new Promise((resolve, reject) => {
-    list.on('end', () => {
-      resolve();
-    });
-    list.on('error', error => {
-      reject(error.stderr);
-    });
   });
 
   if (list.info.has(property)) return list.info.get(property);
@@ -692,6 +752,9 @@ export const patchForge113 = async (
   for (const key in processors) {
     if (Object.prototype.hasOwnProperty.call(processors, key)) {
       const p = processors[key];
+      if (p?.sides && !(p?.sides || []).includes('client')) {
+        continue;
+      }
       const filePath = path.join(librariesPath, ...mavenToArray(p.jar));
       const args = p.args
         .map(arg => replaceIfPossible(arg))
@@ -701,12 +764,7 @@ export const patchForge113 = async (
         cp => `"${path.join(librariesPath, ...mavenToArray(cp))}"`
       );
 
-      const sevenZipPath = await get7zPath();
-      const mainClass = await readJarManifest(
-        filePath,
-        sevenZipPath,
-        'Main-Class'
-      );
+      const mainClass = await readJarManifest(filePath, 'Main-Class');
 
       await new Promise(resolve => {
         const ps = spawn(
@@ -761,19 +819,10 @@ export const importAddonZip = async (
   await new Promise(resolve => {
     setTimeout(() => resolve(), 500);
   });
-  const sevenZipPath = await get7zPath();
-  const extraction = extractFull(tempZipFile, instancePath, {
-    $bin: sevenZipPath,
+
+  await extractAll(tempZipFile, instancePath, {
     yes: true,
     $cherryPick: 'manifest.json'
-  });
-  await new Promise((resolve, reject) => {
-    extraction.on('end', () => {
-      resolve();
-    });
-    extraction.on('error', err => {
-      reject(err.stderr);
-    });
   });
   const manifest = await fse.readJson(instanceManifest);
   return manifest;
@@ -788,19 +837,10 @@ export const downloadAddonZip = async (id, fileID, instancePath, tempPath) => {
   await new Promise(resolve => {
     setTimeout(() => resolve(), 500);
   });
-  const sevenZipPath = await get7zPath();
-  const extraction = extractFull(zipFile, instancePath, {
-    $bin: sevenZipPath,
+
+  await extractAll(zipFile, instancePath, {
     yes: true,
     $cherryPick: 'manifest.json'
-  });
-  await new Promise((resolve, reject) => {
-    extraction.on('end', () => {
-      resolve();
-    });
-    extraction.on('error', err => {
-      reject(err.stderr);
-    });
   });
   const manifest = await fse.readJson(instanceManifest);
   return manifest;
@@ -823,39 +863,39 @@ export const mojangPlayerSkinService = async uuid => {
     const playerSkin = await mojangSessionServerUrl('profile', uuid);
     if (playerSkin.status === 204) return skin;
     const { data } = playerSkin;
-    const base64 = data.properties[0].value;
-    const decoded = JSON.parse(Buffer.from(base64, 'base64').toString());
+  const base64 = data.properties[0].value;
+  const decoded = JSON.parse(Buffer.from(base64, 'base64').toString());
 
-    if (decoded?.textures?.SKIN?.url)
-      skin = await getBase64(decoded?.textures?.SKIN?.url);
-  } catch (error) {
-    console.error(error);
-  }
-  return skin;
+  if (decoded?.textures?.SKIN?.url)
+    skin = await getBase64(decoded?.textures?.SKIN?.url);
+} catch (error) {
+  console.error(error);
+}
+return skin;
 };
 
 export const elyByPlayerSkinService = async name => {
-  let skin = defaultskin;
-  try {
-    const playerTexture = await elyBySkinSystemUrl('textures', name);
-    if (playerTexture.status === 204) return skin;
-    const { data } = playerTexture;
+let skin = defaultskin;
+try {
+  const playerTexture = await elyBySkinSystemUrl('textures', name);
+  if (playerTexture.status === 204) return skin;
+  const { data } = playerTexture;
 
-    if (data?.SKIN?.url) {
-      skin = await getBase64(data?.SKIN?.url);
-    }
-  } catch (error) {
-    console.error(error);
+  if (data?.SKIN?.url) {
+    skin = await getBase64(data?.SKIN?.url);
   }
-  return skin;
+} catch (error) {
+  console.error(error);
+}
+return skin;
 };
 
 const isBase64 = text => {
-  try {
-    return Buffer.from(text, 'base64').toString('base64') === text;
-  } catch (_) {
-    return false;
-  }
+try {
+  return Buffer.from(text, 'base64').toString('base64') === text;
+} catch (_) {
+  return false;
+}
 };
 
 export const extractFace = async buffer => {
@@ -982,13 +1022,24 @@ export const getFilesRecursive = async dir => {
   return files.reduce((a, f) => a.concat(f), []);
 };
 
+export const extractFabricVersionFromManifest = manifest => {
+  // Backwards compatability for manifest entries that use the `yarn`
+  // property to set the fabric loader version. Newer manifests use the
+  // format `fabric-<version>` in the id.
+  let loaderVersion = manifest?.minecraft?.modLoaders[0]?.yarn;
+  if (!loaderVersion) {
+    loaderVersion = manifest?.minecraft?.modLoaders[0]?.id?.split('-', 2)[1];
+  }
+  return loaderVersion;
+};
+
 export const convertcurseForgeToCanonical = (
   curseForge,
   mcVersion,
   forgeManifest
 ) => {
   const patchedCurseForge = curseForge.replace('forge-', '');
-  const forgeEquivalent = forgeManifest[mcVersion]?.find(v => {
+  const forgeEquivalent = forgeManifest[mcVersion].find(v => {
     return v.split('-')[1] === patchedCurseForge;
   });
   return forgeEquivalent;
