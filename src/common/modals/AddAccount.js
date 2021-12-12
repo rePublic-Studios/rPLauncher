@@ -90,7 +90,7 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
             </LoginFailMessage>
           </>
         )}
-                <StyledInput
+        <StyledInput
           disabled={!!username}
           placeholder="Email"
           value={email}
@@ -149,15 +149,15 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
             height: 80px;
           `}
         >
-         {getSelectedService()}
+          {getSelectedService()}
         </h1>
         <FormContainer>
           <h2>External Login</h2>
           {loginFailed ? (
             <>
-            <LoginFailMessage>
-              {loginFailed?.message ? loginFailed.message : loginFailed}
-            </LoginFailMessage>
+              <LoginFailMessage>
+                {loginFailed?.message ? loginFailed.message : loginFailed}
+              </LoginFailMessage>
               <StyledButton
                 css={`
                   margin-top: 12px;

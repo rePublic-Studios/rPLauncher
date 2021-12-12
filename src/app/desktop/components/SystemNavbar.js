@@ -114,18 +114,21 @@ const SystemNavbar = () => {
           props.areSettingsOpen
             ? `background: ${props.theme.palette.grey[700]};`
             : null}
-            &:hover {
-              background-color: rgba(17, 25, 40, 0.85);
-              border-radius: 12px;
-            }
+        &:hover {
+          background-color: rgba(17, 25, 40, 0.85);
+          border-radius: 12px;
+        }
       `}
       onClick={() => {
-          if(modals.filter(function(e) { return e.modalType === "Settings"; }).length > 0) {
-            dispatch(closeModal());
-          }
-          else{
-            dispatch(openModal('Settings'));
-          }
+        if (
+          modals.filter(function filterModal(e) {
+            return e.modalType === 'Settings';
+          }).length > 0
+        ) {
+          dispatch(closeModal());
+        } else {
+          dispatch(openModal('Settings'));
+        }
       }}
     >
       <FontAwesomeIcon icon={faCog} />

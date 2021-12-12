@@ -4,7 +4,6 @@ const path = require('path');
 const axios = require('axios');
 const fse = require('fs-extra');
 const dotenv = require('dotenv');
-const rawChangeLog = require('../src/common/modals/ChangeLogs/changeLog');
 
 dotenv.config();
 
@@ -45,35 +44,6 @@ const main = async () => {
   } catch (err) {
     console.log(err);
 
-    const getChangeLog = () => {
-      let changeLog = '';
-      for (const element in rawChangeLog) {
-        if (rawChangeLog[element].length) {
-          changeLog += `### ${element
-            .charAt(0)
-            .toUpperCase()}${element.substring(1)}\n`;
-
-          for (const e of rawChangeLog[element]) {
-            if (!e?.advanced?.cm || !e?.header || !e?.content) {
-              continue;
-            }
-            const prSplit = e?.advanced?.pr && e?.advanced?.pr.split('/');
-            const advanced =
-              ` ([${e?.advanced?.cm}](https://github.com/rePublic-Studios/rPLauncher/commit/${e?.advanced?.cm})` +
-              `${
-                prSplit
-                  ? ` | [#${e?.advanced.pr}](https://github.com/rePublic-Studios/rPLauncher/pull/${prSplit[0]}` +
-                    `${prSplit?.[1] ? `/commits/${prSplit[1]}` : ''})`
-                  : ''
-              })`;
-            const notes = `- **${e?.header || ''}** ${e?.content || ''}`;
-            changeLog += `${notes + advanced} \n`;
-          }
-        }
-      }
-      return changeLog;
-    };
-
     const { data: newRelease } = await axios.default.post(
       'https://api.github.com/repos/rePublic-Studios/rPLauncher/releases',
       {
@@ -81,7 +51,7 @@ const main = async () => {
         name: `v${version}`,
         draft: true,
         prerelease: version.includes('beta'),
-        body: getChangeLog()
+        body: 'new automatic release'
       },
       {
         headers: {

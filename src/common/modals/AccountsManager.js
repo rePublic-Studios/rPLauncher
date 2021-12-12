@@ -111,9 +111,9 @@ const ProfileSettings = () => {
                         color: ${props => props.theme.palette.error.main};
                       `}
                     >
-                    {!account.accessToken &&
-                      account.accountType !== ACCOUNT_LOCAL &&
-                      ' (EXPIRED)'}
+                      {!account.accessToken &&
+                        account.accountType !== ACCOUNT_LOCAL &&
+                        ' (EXPIRED)'}
                     </span>
                   </div>
                   {!account.accessToken &&
@@ -129,10 +129,10 @@ const ProfileSettings = () => {
                             })
                           );
                         }}
-                    >
-                      Login again
-                    </HoverContainer>
-                  )}
+                      >
+                        Login again
+                      </HoverContainer>
+                    )}
                   {isCurrentAccount && (
                     <Spin spinning={isLoading.isRequesting} />
                   )}

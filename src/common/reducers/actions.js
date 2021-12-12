@@ -126,7 +126,7 @@ import { UPDATE_CONCURRENT_DOWNLOADS } from './settings/actionTypes';
 import { UPDATE_MODAL } from './modals/actionTypes';
 import PromiseQueue from '../../app/desktop/utils/PromiseQueue';
 import fmlLibsMapping from '../../app/desktop/utils/fmllibs';
-import { openModal, closeModal } from './modals/actions';
+import { openModal } from './modals/actions';
 import forgePatcher from '../utils/forgePatcher';
 
 export function initManifests() {

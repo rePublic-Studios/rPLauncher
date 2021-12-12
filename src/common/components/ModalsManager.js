@@ -7,7 +7,7 @@ import Settings from '../modals/Settings';
 
 const Overlay = styled.div`
   position: absolute;
-  top: ${props => props.theme.sizes.height.systemNavbar+5}px;
+  top: ${props => props.theme.sizes.height.systemNavbar + 5}px;
   left: 0;
   bottom: 0;
   right: 0;

@@ -159,7 +159,7 @@ export const librariesMapper = (libraries, librariesPath) => {
             ...(native && { natives: true })
           });
         }
-        
+
         // Patch log4j versions https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-44228
         for (const k in tempArr) {
           if (lib?.name?.includes('log4j')) {
@@ -863,39 +863,39 @@ export const mojangPlayerSkinService = async uuid => {
     const playerSkin = await mojangSessionServerUrl('profile', uuid);
     if (playerSkin.status === 204) return skin;
     const { data } = playerSkin;
-  const base64 = data.properties[0].value;
-  const decoded = JSON.parse(Buffer.from(base64, 'base64').toString());
+    const base64 = data.properties[0].value;
+    const decoded = JSON.parse(Buffer.from(base64, 'base64').toString());
 
-  if (decoded?.textures?.SKIN?.url)
-    skin = await getBase64(decoded?.textures?.SKIN?.url);
-} catch (error) {
-  console.error(error);
-}
-return skin;
+    if (decoded?.textures?.SKIN?.url)
+      skin = await getBase64(decoded?.textures?.SKIN?.url);
+  } catch (error) {
+    console.error(error);
+  }
+  return skin;
 };
 
 export const elyByPlayerSkinService = async name => {
-let skin = defaultskin;
-try {
-  const playerTexture = await elyBySkinSystemUrl('textures', name);
-  if (playerTexture.status === 204) return skin;
-  const { data } = playerTexture;
+  let skin = defaultskin;
+  try {
+    const playerTexture = await elyBySkinSystemUrl('textures', name);
+    if (playerTexture.status === 204) return skin;
+    const { data } = playerTexture;
 
-  if (data?.SKIN?.url) {
-    skin = await getBase64(data?.SKIN?.url);
+    if (data?.SKIN?.url) {
+      skin = await getBase64(data?.SKIN?.url);
+    }
+  } catch (error) {
+    console.error(error);
   }
-} catch (error) {
-  console.error(error);
-}
-return skin;
+  return skin;
 };
 
 const isBase64 = text => {
-try {
-  return Buffer.from(text, 'base64').toString('base64') === text;
-} catch (_) {
-  return false;
-}
+  try {
+    return Buffer.from(text, 'base64').toString('base64') === text;
+  } catch (_) {
+    return false;
+  }
 };
 
 export const extractFace = async buffer => {

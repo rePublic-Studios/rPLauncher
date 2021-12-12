@@ -1,10 +1,4 @@
-import {
-  faDiscord,
-  faFacebook,
-  faGithub,
-  faInstagram,
-  faTwitter
-} from '@fortawesome/free-brands-svg-icons';
+import { faDiscord, faGithub } from '@fortawesome/free-brands-svg-icons';
 import { faGlobe } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import React, { memo } from 'react';

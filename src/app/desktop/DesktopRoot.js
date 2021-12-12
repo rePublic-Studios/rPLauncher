@@ -1,4 +1,4 @@
-import React, { useEffect, memo, useState } from 'react';
+import React, { useEffect, memo } from 'react';
 import { useDidMount } from 'rooks';
 import styled from 'styled-components';
 import { Switch } from 'react-router';
@@ -35,7 +35,8 @@ import useTrackIdle from './utils/useTrackIdle';
 import { openModal } from '../../common/reducers/modals/actions';
 import Message from './components/Message';
 import {
-  ACCOUNT_MICROSOFT, ACCOUNT_LOCAL,
+  ACCOUNT_MICROSOFT,
+  ACCOUNT_LOCAL,
   LATEST_JAVA_VERSION
 } from '../../common/utils/constants';
 
@@ -45,7 +46,7 @@ const Wrapper = styled.div`
 `;
 
 const Container = styled.div`
-  height: calc(100% - ${({ theme }) => theme.sizes.height.systemNavbar+11}px);
+  height: calc(100% - ${({ theme }) => theme.sizes.height.systemNavbar + 11}px);
   display: flex;
   flex-direction: column;
   transition: transform 0.2s;

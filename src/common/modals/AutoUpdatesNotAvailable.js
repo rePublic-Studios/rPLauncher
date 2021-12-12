@@ -18,12 +18,12 @@ const AutoUpdatesNotAvailable = () => {
             margin-top: 20px;
           `}
         >
-        Please, update rPLauncher through your package manager or download the
-        new version from our github{' '}
-        <a href="https://github.com/rePublic-Studios/rPLauncher/releases">
-          here
-        </a>
-      </div>
+          Please, update rPLauncher through your package manager or download the
+          new version from our github{' '}
+          <a href="https://github.com/rePublic-Studios/rPLauncher/releases">
+            here
+          </a>
+        </div>
       </Container>
     </Modal>
   );
