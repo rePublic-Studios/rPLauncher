@@ -100,6 +100,13 @@ const createDeployFiles = async () => {
 };
 
 const extraFiles = [];
+
+// Add Authlib to deploy directory
+extraFiles.push({
+  from: 'required',
+  to: './'
+});
+
 let sevenZipPath = null;
 if (process.platform === 'win32') {
   sevenZipPath = 'node_modules/7zip-bin/win/x64/7za.exe';
@@ -118,7 +125,6 @@ extraFiles.push({
   from: sevenZipPath,
   to: './'
 });
-
 const commonConfig = {
   publish: 'never',
   config: {

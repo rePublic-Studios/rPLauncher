@@ -2925,7 +2925,7 @@ export function launchInstance(instanceName) {
 
     const javaArguments = `${
       account.accountType === ACCOUNT_ELYBY
-        ? `-javaagent:${exeData}\\required\\authlib-injector.jar=ely.by`
+        ? `-javaagent:${exeData}\\authlib-injector.jar=ely.by`
         : ``
     } ${javaArgs !== undefined ? javaArgs : args}`.split(' ');
     const javaMem = javaMemory !== undefined ? javaMemory : memory;
