@@ -94,6 +94,7 @@ import {
   convertCompletePathToInstance,
   convertcurseForgeToCanonical,
   copyAssetsToLegacy,
+  addGlobalSettings,
   copyAssetsToResources,
   downloadAddonZip,
   extractAll,
@@ -2180,6 +2181,13 @@ export function downloadInstance(instanceName) {
     else if (manifest && loader?.source === CURSEFORGE)
       await dispatch(processForgeManifest(instanceName));
 
+    // Adding global settings
+    await addGlobalSettings(
+      path.join(_getInstancesPath(state), instanceName),
+      state.settings
+    );
+
+    // Finish here
     dispatch(updateDownloadProgress(0));
 
     // Be aware that from this line the installer lock might be unlocked!
