@@ -124,7 +124,8 @@ export const librariesMapper = (libraries, librariesPath) => {
           tempArr.push({
             url,
             path: path.join(librariesPath, lib.downloads.artifact.path),
-            sha1: lib.downloads.artifact.sha1
+            sha1: lib.downloads.artifact.sha1,
+            name: lib.name
           });
         }
 
@@ -146,7 +147,8 @@ export const librariesMapper = (libraries, librariesPath) => {
               lib.downloads.classifiers[native].path
             ),
             sha1: lib.downloads.classifiers[native].sha1,
-            natives: true
+            natives: true,
+            name: lib.name
           });
         }
         if (tempArr.length === 0) {
@@ -156,44 +158,44 @@ export const librariesMapper = (libraries, librariesPath) => {
               native && `-${native}`
             ).join('/')}`,
             path: path.join(librariesPath, ...mavenToArray(lib.name, native)),
-            ...(native && { natives: true })
+            ...(native && { natives: true }),
+            name: lib.name
           });
         }
-
         // Patch log4j versions https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-44228
         for (const k in tempArr) {
-          if (lib?.name?.includes('log4j')) {
+          if (tempArr[k]?.url?.includes('log4j')) {
             // Get rid of all log4j aside from official
             if (!tempArr[k].url.includes('libraries.minecraft.net')) {
               tempArr[k] = null;
               continue;
             }
 
-            if (lib.name.includes('2.0-beta9')) {
+            if (tempArr[k].url.includes('2.0-beta9')) {
               tempArr[k] = {
                 url: tempArr[k].url
                   .replace(
                     'libraries.minecraft.net',
-                    'cdn.assets-gdevs.com/maven'
+                    'cdn.gdlauncher.com/maven'
                   )
                   .replace(/2.0-beta9/g, '2.0-beta9-fixed'),
                 path: tempArr[k].path.replace(/2.0-beta9/g, '2.0-beta9-fixed'),
                 sha1: tempArr[k].url.includes('log4j-api')
                   ? 'b61eaf2e64d8b0277e188262a8b771bbfa1502b3'
-                  : '677991ea2d7426f76309a73739cecf609679492c'
+                  : '677991ea2d7426f76309a73739cecf609679492c',
+                name: tempArr[k].name
               };
             } else {
-              const log4jLib = tempArr[k].url.includes('log4j-api')
-                ? 'log4j-api'
-                : 'log4j-core';
-
-              const splitName = lib.name.split(':');
+              const splitName = tempArr[k].name.split(':');
               splitName[splitName.length - 1] = '2.15.0';
               const patchedName = splitName.join(':');
 
               // Assuming we can use 2.15
               tempArr[k] = {
-                url: `https://cdn.assets-gdevs.com/maven/org/apache/logging/log4j/${log4jLib}/2.15.0/${log4jLib}-2.15.0.jar`,
+                url: `https://cdn.gdlauncher.com/maven/${mavenToArray(
+                  patchedName,
+                  native
+                ).join(path.sep)}`,
                 path: path.join(
                   librariesPath,
                   ...mavenToArray(patchedName, native)
@@ -505,8 +507,9 @@ export const getJVMArguments112 = (
   args.push(...jvmOptions);
   args.push(`-Djava.library.path="${path.join(instancePath, 'natives')}"`);
   args.push(`-Dminecraft.applet.TargetDirectory="${instancePath}"`);
-  // Temporary fix to mitigate log4j security issue (possibly fixed in https://github.com/apache/logging-log4j2/pull/608)
-  args.push(`-Dlog4j2.formatMsgNoLookups=true`);
+  if (mcJson.logging) {
+    args.push(mcJson?.logging?.client?.argument || '');
+  }
 
   args.push(mcJson.mainClass);
 
@@ -596,8 +599,9 @@ export const getJVMArguments113 = (
   args.push(`-Xmx${memory}m`);
   args.push(`-Xms${memory}m`);
   args.push(`-Dminecraft.applet.TargetDirectory="${instancePath}"`);
-  // Temporary fix to mitigate log4j security issue (possibly fixed in https://github.com/apache/logging-log4j2/pull/608)
-  args.push(`-Dlog4j2.formatMsgNoLookups=true`);
+  if (mcJson.logging) {
+    args.push(mcJson?.logging?.client?.argument || '');
+  }
   args.push(...jvmOptions);
 
   // Eventually inject additional arguments (from 1.17 (?))

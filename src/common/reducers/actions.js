@@ -117,6 +117,7 @@ import {
   patchForge113,
   reflect
 } from '../../app/desktop/utils';
+import ga from '../utils/analytics';
 import {
   downloadFile,
   downloadInstanceFiles
@@ -1184,7 +1185,7 @@ export function updateInstanceConfig(
       const writeFileToDisk = async (content, tempP, p) => {
         await new Promise((resolve, reject) => {
           fss.open(tempP, 'w', async (err, fd) => {
-            if (err) reject(err);
+            if (err || !fd) reject(err);
 
             const buffer = Buffer.from(content);
             fss.write(
@@ -1840,7 +1841,7 @@ export function processFTBManifest(instanceName) {
 export function processForgeManifest(instanceName) {
   return async (dispatch, getState) => {
     const state = getState();
-    const { manifest } = _getCurrentDownloadItem(state);
+    const { manifest, loader } = _getCurrentDownloadItem(state);
     const concurrency = state.settings.concurrentDownloads;
 
     dispatch(updateDownloadStatus(instanceName, 'Downloading mods...'));
@@ -1879,6 +1880,7 @@ export function processForgeManifest(instanceName) {
     await pMap(
       manifest.files,
       async item => {
+        if (!addonsHashmap[item.projectID]) return;
         let ok = false;
         let tries = 0;
         /* eslint-disable no-await-in-loop */
@@ -1917,82 +1919,118 @@ export function processForgeManifest(instanceName) {
       { concurrency }
     );
 
-    dispatch(updateDownloadStatus(instanceName, 'Copying overrides...'));
+    let validAddon = false;
     const addonPathZip = path.join(
       _getTempPath(state),
       instanceName,
       'addon.zip'
     );
-    let progress = 0;
-    await extractAll(
-      addonPathZip,
-      path.join(_getTempPath(state), instanceName),
-      {
-        recursive: true,
-        $cherryPick: 'overrides',
-        $progress: true
-      },
-      {
-        progress: percent => {
-          if (percent !== progress) {
-            progress = percent;
-            dispatch(updateDownloadProgress(percent));
-          }
+
+    try {
+      await fs.stat(addonPathZip);
+      validAddon = true;
+    } catch {
+      // If project and file id are provided, we download it on the spot
+      if (loader.projectID && loader.fileID) {
+        const { data } = await getAddonFile(loader.projectID, loader.fileID);
+        try {
+          await downloadFile(addonPathZip, data.downloadUrl);
+          validAddon = true;
+        } catch {
+          // NO-OP
         }
       }
-    );
+    }
 
-    dispatch(updateDownloadStatus(instanceName, 'Finalizing overrides...'));
-
-    const overrideFiles = await getFilesRecursive(
-      path.join(_getTempPath(state), instanceName, 'overrides')
-    );
-    await dispatch(
-      updateInstanceConfig(instanceName, config => {
-        return {
-          ...config,
-          mods: [...(config.mods || []), ...modManifests],
-          overrides: overrideFiles.map(v =>
-            path.relative(
-              path.join(_getTempPath(state), instanceName, 'overrides'),
-              v
-            )
-          )
-        };
-      })
-    );
-
-    await new Promise(resolve => {
-      // Force premature unlock to let our listener catch mods from override
-      lockfile.unlock(
-        path.join(
-          _getInstancesPath(getState()),
-          instanceName,
-          'installing.lock'
-        ),
-        err => {
-          if (err) console.error(err);
-          resolve();
+    if (validAddon) {
+      dispatch(updateDownloadStatus(instanceName, 'Copying overrides...'));
+      let progress = 0;
+      await extractAll(
+        addonPathZip,
+        path.join(_getTempPath(state), instanceName),
+        {
+          recursive: true,
+          $cherryPick: 'overrides',
+          $progress: true
+        },
+        {
+          progress: percent => {
+            if (percent !== progress) {
+              progress = percent;
+              dispatch(updateDownloadProgress(percent));
+            }
+          }
         }
       );
-    });
 
-    await Promise.all(
-      overrideFiles.map(v => {
-        const relativePath = path.relative(
-          path.join(_getTempPath(state), instanceName, 'overrides'),
-          v
-        );
-        const newPath = path.join(
-          _getInstancesPath(state),
-          instanceName,
-          relativePath
-        );
-        return fse.copy(v, newPath, { overwrite: true });
-      })
-    );
+      dispatch(updateDownloadStatus(instanceName, 'Finalizing overrides...'));
 
-    await fse.remove(addonPathZip);
+      const overrideFiles = await getFilesRecursive(
+        path.join(_getTempPath(state), instanceName, 'overrides')
+      );
+      await dispatch(
+        updateInstanceConfig(instanceName, config => {
+          return {
+            ...config,
+            mods: [...(config.mods || []), ...modManifests],
+            overrides: overrideFiles.map(v =>
+              path.relative(
+                path.join(_getTempPath(state), instanceName, 'overrides'),
+                v
+              )
+            )
+          };
+        })
+      );
+
+      await new Promise(resolve => {
+        // Force premature unlock to let our listener catch mods from override
+        lockfile.unlock(
+          path.join(
+            _getInstancesPath(getState()),
+            instanceName,
+            'installing.lock'
+          ),
+          err => {
+            if (err) console.error(err);
+            resolve();
+          }
+        );
+      });
+
+      await Promise.all(
+        overrideFiles.map(v => {
+          const relativePath = path.relative(
+            path.join(_getTempPath(state), instanceName, 'overrides'),
+            v
+          );
+          const newPath = path.join(
+            _getInstancesPath(state),
+            instanceName,
+            relativePath
+          );
+          return fse.copy(v, newPath, { overwrite: true });
+        })
+      );
+
+      await fse.remove(addonPathZip);
+    } else {
+      await new Promise(resolve => {
+        // Force premature unlock to let our listener catch mods from override
+        lockfile.unlock(
+          path.join(
+            _getInstancesPath(getState()),
+            instanceName,
+            'installing.lock'
+          ),
+          err => {
+            if (err) console.error(err);
+            resolve();
+          }
+        );
+      });
+    }
+
     await fse.remove(path.join(_getTempPath(state), instanceName));
   };
 }
@@ -2073,6 +2111,23 @@ export function downloadInstance(instanceName) {
         )
       })
     );
+
+    if (mcJson.logging) {
+      const {
+        sha1: loggingHash,
+        id: loggingId,
+        url: loggingUrl
+      } = mcJson.logging.client.file;
+      await downloadFile(
+        path.join(
+          _getAssetsPath(state),
+          'objects',
+          loggingHash.substring(0, 2),
+          loggingId
+        ),
+        loggingUrl
+      );
+    }
 
     const libraries = librariesMapper(
       mcJson.libraries,
@@ -2417,7 +2472,7 @@ export const startListener = () => {
       const processChange = async () => {
         const newState = getState();
         const instances = newState.instances.list;
-        const modData = instances[oldInstanceName].mods.find(
+        const modData = (instances[oldInstanceName].mods || []).find(
           m => m.fileName === path.basename(fileName)
         );
         if (modData) {
@@ -2744,7 +2799,7 @@ export function getJavaVersionForMCVersion(mcVersion) {
   };
 }
 
-export function launchInstance(instanceName) {
+export function launchInstance(instanceName, forceQuit = false) {
   return async (dispatch, getState) => {
     const state = getState();
 
@@ -2756,13 +2811,19 @@ export function launchInstance(instanceName) {
     const { memory, args } = state.settings.java;
     const { resolution: globalMinecraftResolution } =
       state.settings.minecraftSettings;
+    const instanceState = _getInstance(state)(instanceName);
     const {
       loader,
       javaArgs,
       javaMemory,
       customJavaPath,
       resolution: instanceResolution
-    } = _getInstance(state)(instanceName);
+    } = instanceState;
+
+    const mcJsonPath = path.join(
+      _getMinecraftVersionsPath(state),
+      `${loader?.mcVersion}.json`
+    );
 
     let discordRPCDetails = `Minecraft ${loader?.mcVersion}`;
 
@@ -2776,6 +2837,37 @@ export function launchInstance(instanceName) {
       dispatch(getJavaVersionForMCVersion(loader?.mcVersion))
     );
     const javaPath = customJavaPath || defaultJavaPathVersion;
+    let missingResource = false;
+
+    const verifyResource = async resourcePath => {
+      if (forceQuit) return true;
+      try {
+        await fs.access(resourcePath);
+        return true;
+      } catch {
+        console.warn(`Missing resource: ${resourcePath}`);
+        dispatch(
+          addToQueue(
+            instanceName,
+            instanceState.loader,
+            null,
+            instanceState.background
+          )
+        );
+
+        await new Promise(resolve => {
+          const unsubscribe = window.__store.subscribe(() => {
+            if (!getState().downloadQueue[instanceName]) {
+              unsubscribe();
+              return resolve();
+            }
+          });
+        });
+
+        dispatch(launchInstance(instanceName));
+        return false;
+      }
+    };
 
     const instancePath = path.join(_getInstancesPath(state), instanceName);
 
@@ -2792,15 +2884,72 @@ export function launchInstance(instanceName) {
 
     let errorLogs = '';
 
-    const mcJson = await fse.readJson(
-      path.join(_getMinecraftVersionsPath(state), `${loader?.mcVersion}.json`)
+    // Verify main jar JSON
+    let verified = await verifyResource(mcJsonPath);
+    if (!verified) return;
+
+    const mcJson = await fse.readJson(mcJsonPath);
+
+    if (mcJson.logging) {
+      // Verify logging xml
+      const { sha1: loggingHash, id: loggingId } = mcJson.logging.client.file;
+      if (loggingHash && loggingId) {
+        const loggingPath = path.join(
+          _getAssetsPath(state),
+          'objects',
+          loggingHash.substring(0, 2),
+          loggingId
+        );
+        verified = await verifyResource(loggingPath);
+        if (!verified) return;
+      }
+    }
+
+    // Verify assets
+    const assetsFile = path.join(
+      _getAssetsPath(state),
+      'indexes',
+      `${mcJson.assets}.json`
     );
+    verified = await verifyResource(assetsFile);
+    if (!verified) return;
+    await fse.readJson(assetsFile);
+    const assetsJson = await fse.readJson(assetsFile);
+
+    const assets = Object.entries(assetsJson.objects).map(
+      ([assetKey, { hash }]) => ({
+        url: `${MC_RESOURCES_URL}/${hash.substring(0, 2)}/${hash}`,
+        type: 'asset',
+        sha1: hash,
+        path: path.join(
+          _getAssetsPath(state),
+          'objects',
+          hash.substring(0, 2),
+          hash
+        ),
+        resourcesPath: path.join(
+          _getInstancesPath(state),
+          instanceName,
+          'resources',
+          assetKey
+        ),
+        legacyPath: path.join(
+          _getAssetsPath(state),
+          'virtual',
+          'legacy',
+          assetKey
+        )
+      })
+    );
+
     let libraries = [];
     let mcMainFile = {
       url: mcJson.downloads.client.url,
       sha1: mcJson.downloads.client.sha1,
       path: path.join(_getMinecraftVersionsPath(state), `${mcJson.id}.jar`)
     };
+    verified = await verifyResource(mcMainFile.path);
+    if (!verified) return;
 
     if (loader && loader?.loaderType === 'fabric') {
       const fabricJsonPath = path.join(
@@ -2811,6 +2960,10 @@ export function launchInstance(instanceName) {
         loader?.loaderVersion,
         'fabric.json'
       );
+
+      verified = await verifyResource(fabricJsonPath);
+      if (!verified) return;
+
       const fabricJson = await fse.readJson(fabricJsonPath);
       const fabricLibraries = librariesMapper(
         fabricJson.libraries,
@@ -2820,6 +2973,16 @@ export function launchInstance(instanceName) {
       // Replace classname
       mcJson.mainClass = fabricJson.mainClass;
     } else if (loader && loader?.loaderType === 'forge') {
+      const forgeJsonPath = path.join(
+        _getLibrariesPath(state),
+        'net',
+        'minecraftforge',
+        loader?.loaderVersion,
+        `${loader?.loaderVersion}.json`
+      );
+      verified = await verifyResource(forgeJsonPath);
+      if (!verified) return;
+
       if (gt(coerce(loader?.mcVersion), coerce('1.5.2'))) {
         const getForgeLastVer = ver =>
           Number.parseInt(ver.split('.')[ver.split('.').length - 1], 10);
@@ -2832,7 +2995,7 @@ export function launchInstance(instanceName) {
         ) {
           const moveJavaLegacyFixerToInstance = async () => {
             await fs.lstat(path.join(_getDataStorePath(state), '__JLF__.jar'));
-            await fse.move(
+            await fse.copy(
               path.join(_getDataStorePath(state), '__JLF__.jar'),
               instanceJLFPath
             );
@@ -2844,14 +3007,6 @@ export function launchInstance(instanceName) {
             await moveJavaLegacyFixerToInstance();
           }
         }
-
-        const forgeJsonPath = path.join(
-          _getLibrariesPath(state),
-          'net',
-          'minecraftforge',
-          loader?.loaderVersion,
-          `${loader?.loaderVersion}.json`
-        );
         const forgeJson = await fse.readJson(forgeJsonPath);
         const forgeLibraries = librariesMapper(
           forgeJson.version.libraries,
@@ -2871,8 +3026,12 @@ export function launchInstance(instanceName) {
                 return arg
                   .replace(/\${version_name}/g, mcJson.id)
                   .replace(
+                    /=\${library_directory}/g,
+                    `="${_getLibrariesPath(state)}"`
+                  )
+                  .replace(
                     /\${library_directory}/g,
-                    `"${_getLibrariesPath(state)}"`
+                    `${_getLibrariesPath(state)}`
                   )
                   .replace(
                     /\${classpath_separator}/g,
@@ -2899,24 +3058,38 @@ export function launchInstance(instanceName) {
       'url'
     );
 
-    const missingLibraries = [];
-    // Check all libraries
-    for (const lib of libraries) {
+    for (const resource of [...libraries, ...assets]) {
       try {
-        await fs.access(lib.path);
+        await fs.access(resource.path);
       } catch {
-        missingLibraries.push(lib);
+        console.warn(`Missing resource: ${resource.path}`);
+        missingResource = true;
       }
     }
 
-    if (missingLibraries.length) {
-      console.log('Found missing libraries', missingLibraries);
-      try {
-        await downloadInstanceFiles(missingLibraries);
-      } catch {
-        // Swallow error, the instance will probably crash
-      }
+    if (missingResource) {
+      dispatch(
+        addToQueue(
+          instanceName,
+          instanceState.loader,
+          null,
+          instanceState.background
+        )
+      );
+
+      await new Promise(resolve => {
+        const unsubscribe = window.__store.subscribe(() => {
+          if (!getState().downloadQueue[instanceName]) {
+            unsubscribe();
+            return resolve();
+          }
+        });
+      });
+
+      dispatch(launchInstance(instanceName, true));
+      return;
     }
+    ga.sendCustomEvent('launchedInstance');
 
     const getJvmArguments =
       mcJson.assets !== 'legacy' && gte(coerce(mcJson.assets), coerce('1.13'))
@@ -2960,6 +3133,15 @@ export function launchInstance(instanceName) {
       replaceWith
     ];
 
+    const { sha1: loggingHash, id: loggingId } =
+      mcJson?.logging?.client?.file || {};
+    const loggingPath = path.join(
+      assetsPath,
+      'objects',
+      loggingHash.substring(0, 2),
+      loggingId
+    );
+
     console.log(
       `"${javaPath}" ${getJvmArguments(
         libraries,
@@ -2972,7 +3154,13 @@ export function launchInstance(instanceName) {
         gameResolution,
         true,
         javaArguments
-      ).join(' ')}`.replace(...replaceRegex)
+      ).join(' ')}`
+        .replace(...replaceRegex)
+        .replace(
+          // eslint-disable-next-line no-template-curly-in-string
+          '-Dlog4j.configurationFile=${path}',
+          `-Dlog4j.configurationFile="${loggingPath}"`
+        )
     );
 
     if (state.settings.hideWindowOnGameLaunch) {
@@ -2981,7 +3169,16 @@ export function launchInstance(instanceName) {
 
     const ps = spawn(
       `"${javaPath}"`,
-      jvmArguments.map(v => v.toString().replace(...replaceRegex)),
+      jvmArguments.map(v =>
+        v
+          .toString()
+          .replace(...replaceRegex)
+          .replace(
+            // eslint-disable-next-line no-template-curly-in-string
+            '-Dlog4j.configurationFile=${path}',
+            `-Dlog4j.configurationFile="${loggingPath}"`
+          )
+      ),
       {
         cwd: instancePath,
         shell: true

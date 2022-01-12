@@ -170,11 +170,6 @@ const ProfileSettings = () => {
                                           loginWithOAuthAccessToken(false)
                                         );
                                         break;
-                                      case ACCOUNT_LOCAL:
-                                        dispatch(
-                                          loginLocalWithoutAccessToken(false)
-                                        );
-                                        break;
                                       default:
                                         dispatch(loginWithAccessToken(false));
                                         break;

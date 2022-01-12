@@ -52,7 +52,7 @@ const SystemNavbar = () => {
         .then(v => dispatch(updateUpdateAvailable(Boolean(v))))
         .catch(console.error);
     } else {
-      dispatch(isNewVersionAvailable())
+      isNewVersionAvailable()
         .then(v => dispatch(updateUpdateAvailable(Boolean(v))))
         .catch(console.error);
     }
@@ -189,6 +189,7 @@ const SystemNavbar = () => {
               rel="noopener noreferrer"
               css={`
                 margin-top: 5px;
+                margin-right: 5px;
                 -webkit-app-region: no-drag;
               `}
             >
@@ -291,8 +292,8 @@ const SystemNavbar = () => {
               rel="noopener noreferrer"
               css={`
                 margin-top: 5px;
+                margin-right: 5px;
                 -webkit-app-region: no-drag;
-                cursor: pointer;
               `}
             >
               <Logo size={35} pointerCursor />
