@@ -160,13 +160,13 @@ export default function Settings() {
   const ContentComponent = pages[page].component;
 
   const instances = useSelector(_getInstances);
+  const _state = useSelector(state => state);
+
   const saveAllInstanceOptions = async () => {
     for (const instance of instances) {
-      await useSelector(state =>
-        addGlobalSettings(
-          path.join(_getInstancesPath(state), instance.name),
-          state.settings
-        )
+      await addGlobalSettings(
+        path.join(_getInstancesPath(_state), instance.name),
+        _state.settings
       );
     }
   };

@@ -474,6 +474,13 @@ export const copyAssetsToLegacy = async assets => {
   );
 };
 
+const getFileContent = async (srcPath, callback) => {
+  fss.readFile(srcPath, 'utf8', (err, data) => {
+    if (err) throw err;
+    callback(data);
+  });
+};
+
 export const addGlobalSettings = async (instancePath, settings) => {
   const filePath = `${instancePath}/options.txt`;
 
@@ -505,7 +512,7 @@ export const addGlobalSettings = async (instancePath, settings) => {
     `fov:${fov}\n` +
     `maxFps:${fps}\n` +
     `renderDistance:${renderDistance}\n` +
-    `enableVsync:${vsync}`;
+    `enableVsync:${vsync}\n`;
 
   if (!muteAllSounds) {
     data +=
@@ -518,7 +525,7 @@ export const addGlobalSettings = async (instancePath, settings) => {
       `soundCategory_neutral:${soundCategoryNeutral}\n` +
       `soundCategory_player:${soundCategoryPlayer}\n` +
       `soundCategory_ambient:${soundCategoryAmbient}\n` +
-      `soundCategory_voice:${soundCategoryVoice}\n`;
+      `soundCategory_voice:${soundCategoryVoice}`;
   } else {
     data +=
       `soundCategory_master:0\n` +
@@ -530,35 +537,27 @@ export const addGlobalSettings = async (instancePath, settings) => {
       `soundCategory_neutral:0\n` +
       `soundCategory_player:0\n` +
       `soundCategory_ambient:0\n` +
-      `soundCategory_voice:0\n`;
+      `soundCategory_voice:0`;
   }
 
-  try {
-    if (!fss.existsSync(filePath)) {
-      fss.writeFile(filePath, data, err => {
-        // In case of a error throw err.
+  if (!fss.existsSync(filePath)) {
+    await fss.writeFile(filePath, data, _err => {
+      // In case of a error throw err.
+      if (_err) throw _err;
+    });
+  } else {
+    let newData;
+    getFileContent(filePath, _data => {
+      const splitted = data.split('\n');
+      for (let i = 0; i < splitted.length; i += 1) {
+        const regex = new RegExp(`(?=${splitted[i].split(':')[0]}).*(?=\n)`);
+        newData = _data.replace(regex, splitted[i]);
+      }
+
+      fss.writeFile(filePath, newData, err => {
         if (err) throw err;
       });
-    }
-    /* TODO
-    else{
-      fs.readFile(filePath, 'utf8' , (err, datas) => {
-        if (err) {
-          console.error(err)
-          return
-        }
-
-        var splitted = data.split("\n");
-        for(var i=0; i < splitted.length; i++) {
-          var regex = new RegExp("(?<=" + splitted[i].split(":")[0] + ":)(.*)(?=\n)", "g");
-          var result = datas.replace(regex, splitted[i].split(":")[1]);
-          
-          console.log(result);
-        }
-      })
-    } */
-  } catch (err) {
-    console.error(err);
+    });
   }
 };
 
