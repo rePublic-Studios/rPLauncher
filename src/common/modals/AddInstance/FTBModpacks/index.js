@@ -28,9 +28,9 @@ const FTBModpacks = ({ setStep, setModpack, setVersion }) => {
     const init = async () => {
       let data;
       if (searchText.length < 3) {
-        ({ data } = await getFTBMostPlayed());
+        data = await getFTBMostPlayed();
       } else {
-        ({ data } = await getFTBSearch(searchText));
+        data = await getFTBSearch(searchText);
       }
       setModpackIds(data.packs || []);
       updateModpacks();

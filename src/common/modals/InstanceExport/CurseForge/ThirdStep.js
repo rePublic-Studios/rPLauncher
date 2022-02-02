@@ -137,7 +137,7 @@ export default function ThirdStep({
               if (tries !== 1) {
                 await new Promise(resolve => setTimeout(resolve, 5000));
               }
-              const { data } = await getAddon(mod.projectID);
+              const data = await getAddon(mod.projectID);
 
               ok = true;
               return {
@@ -165,23 +165,23 @@ export default function ThirdStep({
       // Make sure mod with curseforge ids gets removed from mods folder if included.
       const filteredFiles = mods
         ? selectedFiles.filter(file => {
-            const match = mods.find(
-              mod => mod.fileName === path.basename(file)
-            );
-            if (match && match.projectID) return false;
-            return true;
-          })
+          const match = mods.find(
+            mod => mod.fileName === path.basename(file)
+          );
+          if (match && match.projectID) return false;
+          return true;
+        })
         : selectedFiles;
 
       // Filter only selected curseforge mods for use in manifest.
       const filteredCurseforgeMods = mods
         ? mods.filter(mod => {
-            const match = selectedFiles.find(
-              file => mod.fileName === path.basename(file)
-            );
-            if (match && mod.projectID) return true;
-            return false;
-          })
+          const match = selectedFiles.find(
+            file => mod.fileName === path.basename(file)
+          );
+          if (match && mod.projectID) return true;
+          return false;
+        })
         : selectedFiles;
 
       // Process files from selection

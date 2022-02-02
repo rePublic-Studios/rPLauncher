@@ -79,7 +79,7 @@ const InstanceName = ({
     if (!modpack) return null;
     // Curseforge
     if (!modpack.synopsis) {
-      return modpack?.attachments?.find(v => v?.isDefault)?.thumbnailUrl;
+      return modpack?.logo?.thumbnailUrl;
     } else {
       // FTB
       const image = modpack?.art?.reduce((prev, curr) => {
@@ -101,7 +101,7 @@ const InstanceName = ({
 
     const initTimestamp = Date.now();
 
-    const isCurseForgeModpack = Boolean(modpack?.attachments);
+    const isCurseForgeModpack = Boolean(version?.source === CURSEFORGE);
     const isFTBModpack = Boolean(modpack?.art);
     let manifest;
 
@@ -232,10 +232,10 @@ const InstanceName = ({
           data.targets[0].name === FABRIC
             ? forgeModloader?.version
             : convertcurseForgeToCanonical(
-                forgeModloader?.version,
-                mcVersion,
-                forgeManifest
-              ),
+              forgeModloader?.version,
+              mcVersion,
+              forgeManifest
+            ),
         fileID: version?.fileID,
         projectID: version?.projectID,
         source: FTB,
@@ -576,7 +576,7 @@ const ModpackName = styled.span`
   font-weight: bold;
   font-size: 45px;
   animation: ${({ state }) =>
-      state === 'entering' || state === 'entered' ? ModpackNameKeyframe : null}
+    state === 'entering' || state === 'entered' ? ModpackNameKeyframe : null}
     0.2s ease-in-out forwards;
   box-sizing: border-box;
   text-align: center;
@@ -589,7 +589,7 @@ const ModpackName = styled.span`
     box-sizing: border-box;
     position: absolute;
     border: ${({ state }) =>
-        state === 'entering' || state === 'entered' ? 4 : 0}px
+    state === 'entering' || state === 'entered' ? 4 : 0}px
       solid transparent;
     width: 0;
     height: 0;
@@ -600,23 +600,23 @@ const ModpackName = styled.span`
     border-top-color: white;
     border-right-color: white;
     animation: ${({ state }) =>
-        state === 'entering' || state === 'entered'
-          ? ModpackNameBorderKeyframe
-          : null}
+    state === 'entering' || state === 'entered'
+      ? ModpackNameBorderKeyframe
+      : null}
       2s infinite;
   }
   &::after {
     bottom: 0;
     right: 0;
     animation: ${({ state }) =>
-          state === 'entering' || state === 'entered'
-            ? ModpackNameBorderKeyframe
-            : null}
+    state === 'entering' || state === 'entered'
+      ? ModpackNameBorderKeyframe
+      : null}
         2s 1s infinite,
       ${({ state }) =>
-          state === 'entering' || state === 'entered'
-            ? ModpackNameBorderColorKeyframe
-            : null}
+    state === 'entering' || state === 'entered'
+      ? ModpackNameBorderColorKeyframe
+      : null}
         2s 1s infinite;
   }
 `;

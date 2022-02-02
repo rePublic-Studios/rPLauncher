@@ -920,7 +920,7 @@ export const importAddonZip = async (
 };
 
 export const downloadAddonZip = async (id, fileID, instancePath, tempPath) => {
-  const { data } = await getAddonFile(id, fileID);
+  const data = await getAddonFile(id, fileID);
   const instanceManifest = path.join(instancePath, 'manifest.json');
   const zipFile = path.join(tempPath, 'addon.zip');
   await downloadFile(zipFile, data.downloadUrl);
@@ -953,7 +953,7 @@ export const mojangPlayerSkinService = async uuid => {
   try {
     const playerSkin = await mojangSessionServerUrl('profile', uuid);
     if (playerSkin.status === 204) return skin;
-    const { data } = playerSkin;
+    const data = playerSkin;
     const base64 = data.properties[0].value;
     const decoded = JSON.parse(Buffer.from(base64, 'base64').toString());
 
@@ -970,7 +970,7 @@ export const elyByPlayerSkinService = async name => {
   try {
     const playerTexture = await elyBySkinSystemUrl('textures', name);
     if (playerTexture.status === 204) return skin;
-    const { data } = playerTexture;
+    const data = playerTexture;
 
     if (data?.SKIN?.url) {
       skin = await getBase64(data?.SKIN?.url);
@@ -1044,27 +1044,27 @@ export const isInstanceFolderPath = (f, instancesPath) =>
 
 export const isFileModFabric = file => {
   return (
-    (file.gameVersion.includes('Fabric') ||
+    (file.gameVersions.includes('Fabric') ||
       file.modules.find(v => v.foldername === 'fabric.mod.json')) &&
-    !file.gameVersion.includes('Forge')
+    !file.gameVersions.includes('Forge')
   );
 };
 
 export const filterFabricFilesByVersion = (files, version) => {
   return files.filter(v => {
-    if (Array.isArray(v.gameVersion)) {
-      return v.gameVersion.includes(version) && isFileModFabric(v);
+    if (Array.isArray(v.gameVersions)) {
+      return v.gameVersions.includes(version) && isFileModFabric(v);
     }
-    return v.gameVersion === version;
+    return v.gameVersions === version;
   });
 };
 
 export const filterForgeFilesByVersion = (files, version) => {
   return files.filter(v => {
-    if (Array.isArray(v.gameVersion)) {
-      return v.gameVersion.includes(version) && !isFileModFabric(v);
+    if (Array.isArray(v.gameVersions)) {
+      return v.gameVersions.includes(version) && !isFileModFabric(v);
     }
-    return v.gameVersion === version;
+    return v.gameVersions === version;
   });
 };
 

@@ -22,7 +22,7 @@ const ModChangelog = ({ modpackId, files, type, modpackName }) => {
       if (type === 'ftb') {
         data = await getFTBChangelog(modpackId, id);
       } else {
-        ({ data } = await getAddonFileChangelog(modpackId, id));
+        data = await getAddonFileChangelog(modpackId, id);
       }
     } catch (err) {
       console.error(err);
@@ -97,9 +97,8 @@ const ModChangelog = ({ modpackId, files, type, modpackName }) => {
                 `}
               >
                 {type === 'ftb'
-                  ? `${modpackName} - ${
-                      (files || []).find(v => v.id === selectedId)?.name
-                    }`
+                  ? `${modpackName} - ${(files || []).find(v => v.id === selectedId)?.name
+                  }`
                   : (files || []).find(v => v.id === selectedId)?.displayName}
               </div>
               {type === 'ftb' ? (
