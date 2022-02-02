@@ -20,18 +20,86 @@ import {
 } from '../../../common/reducers/actions';
 import Logo from '../../../ui/Logo';
 
-const SystemNavbar = () => {
+const isOsx = process.platform === 'darwin';
+const isLinux = process.platform === 'linux';
+const isWindows = process.platform === 'win32';
+
+const DevtoolButton = () => {
+  const openDevTools = () => {
+    ipcRenderer.invoke('open-devtools');
+  };
+
+  return (
+    <TerminalButton
+      css={`
+        margin: 0 10px;
+      `}
+      onClick={openDevTools}
+    >
+      <FontAwesomeIcon icon={faTerminal} />
+    </TerminalButton>
+  );
+};
+
+const SettingsButton = () => {
   const dispatch = useDispatch();
-  const [isMaximized, setIsMaximized] = useState(false);
-  const isUpdateAvailable = useSelector(state => state.updateAvailable);
-  const location = useSelector(state => state.router.location.pathname);
-  const [isAppImage, setIsAppImage] = useState(false);
 
   const modals = useSelector(state => state.modals);
 
   const areSettingsOpen = modals.find(
     v => v.modalType === 'Settings' && !v.unmounting
   );
+
+  return (
+    <TerminalButton
+      areSettingsOpen={areSettingsOpen}
+      css={`
+        margin: 0 20px 0 10px;
+        ${props =>
+          props.areSettingsOpen
+            ? `background: ${props.theme.palette.grey[700]};`
+            : null}
+      `}
+      onClick={() => {
+        if (areSettingsOpen) {
+          dispatch(closeModal());
+        } else {
+          dispatch(openModal('Settings'));
+        }
+      }}
+    >
+      <FontAwesomeIcon icon={faCog} />
+    </TerminalButton>
+  );
+};
+
+const UpdateButton = ({ isAppImage }) => {
+  const dispatch = useDispatch();
+
+  return (
+    <TerminalButton
+      onClick={() => {
+        if (isAppImage || isWindows) {
+          ipcRenderer.invoke('installUpdateAndQuitOrRestart');
+        } else {
+          dispatch(openModal('AutoUpdatesNotAvailable'));
+        }
+      }}
+      css={`
+        color: ${props => props.theme.palette.colors.green};
+      `}
+    >
+      <FontAwesomeIcon icon={faDownload} />
+    </TerminalButton>
+  );
+};
+
+const SystemNavbar = () => {
+  const dispatch = useDispatch();
+  const [isMaximized, setIsMaximized] = useState(false);
+  const isUpdateAvailable = useSelector(state => state.updateAvailable);
+  const location = useSelector(state => state.router.location.pathname);
+  const [isAppImage, setIsAppImage] = useState(false);
 
   const checkForUpdates = async () => {
     const isAppImageVar = await ipcRenderer.invoke('isAppImage');
@@ -81,77 +149,6 @@ const SystemNavbar = () => {
     }, 1500);
   }, []);
 
-  const openDevTools = () => {
-    ipcRenderer.invoke('open-devtools');
-  };
-
-  const isOsx = process.platform === 'darwin';
-  const isLinux = process.platform === 'linux';
-  const isWindows = process.platform === 'win32';
-
-  const DevtoolButton = () => (
-    <TerminalButton
-      css={`
-        margin: 0 10px;
-        border-radius: 25px;
-        &:hover {
-          background-color: rgba(17, 25, 40, 0.85);
-          border-radius: 12px;
-      `}
-      onClick={openDevTools}
-    >
-      <FontAwesomeIcon icon={faTerminal} />
-    </TerminalButton>
-  );
-
-  const SettingsButton = () => (
-    <TerminalButton
-      areSettingsOpen={areSettingsOpen}
-      css={`
-        margin: 0 20px 0 10px;
-        border-radius: 25px;
-        ${props =>
-          props.areSettingsOpen
-            ? `background: ${props.theme.palette.grey[700]};`
-            : null}
-        &:hover {
-          background-color: rgba(17, 25, 40, 0.85);
-          border-radius: 12px;
-        }
-      `}
-      onClick={() => {
-        if (
-          modals.filter(function filterModal(e) {
-            return e.modalType === 'Settings';
-          }).length > 0
-        ) {
-          dispatch(closeModal());
-        } else {
-          dispatch(openModal('Settings'));
-        }
-      }}
-    >
-      <FontAwesomeIcon icon={faCog} />
-    </TerminalButton>
-  );
-
-  const UpdateButton = () => (
-    <TerminalButton
-      onClick={() => {
-        if (isAppImage || isWindows) {
-          ipcRenderer.invoke('installUpdateAndQuitOrRestart');
-        } else {
-          dispatch(openModal('AutoUpdatesNotAvailable'));
-        }
-      }}
-      css={`
-        color: ${props => props.theme.palette.colors.green};
-      `}
-    >
-      <FontAwesomeIcon icon={faDownload} />
-    </TerminalButton>
-  );
-
   const quitApp = () => {
     if (isUpdateAvailable && (isAppImage || !isLinux)) {
       ipcRenderer.invoke('installUpdateAndQuitOrRestart', true);
@@ -176,33 +173,31 @@ const SystemNavbar = () => {
       }}
     >
       {!isOsx && (
-        <>
-          <div
+        <div
+          css={`
+            cursor: auto !important;
+            -webkit-app-region: drag;
+            margin-left: 10px;
+          `}
+        >
+          <a
+            href="https://rp.tribbe.dev/"
+            rel="noopener noreferrer"
             css={`
-              cursor: auto !important;
-              -webkit-app-region: drag;
-              margin-left: 10px;
+              margin-top: 5px;
+              margin-right: 5px;
+              -webkit-app-region: no-drag;
             `}
           >
-            <a
-              href="https://rp.tribbe.dev/"
-              rel="noopener noreferrer"
-              css={`
-                margin-top: 5px;
-                margin-right: 5px;
-                -webkit-app-region: no-drag;
-              `}
-            >
-              <Logo size={35} pointerCursor />
-            </a>
-            <DevtoolButton />
-          </div>
-        </>
+            <Logo size={35} pointerCursor />
+          </a>
+          <DevtoolButton />
+        </div>
       )}
       <Container os={isOsx}>
         {!isOsx ? (
           <>
-            {isUpdateAvailable && <UpdateButton />}
+            {isUpdateAvailable && <UpdateButton isAppImage={isAppImage} />}
             {!isLocation('/') && !isLocation('/onboarding') && (
               <SettingsButton />
             )}
@@ -279,27 +274,25 @@ const SystemNavbar = () => {
             {!isLocation('/') && !isLocation('/onboarding') && (
               <SettingsButton />
             )}
-            {isUpdateAvailable && <UpdateButton />}
+            {isUpdateAvailable && <UpdateButton isAppImage={isAppImage} />}
           </>
         )}
       </Container>
       {isOsx && (
-        <>
-          <div>
-            <DevtoolButton />
-            <a
-              href="https://rp.tribbe.dev/"
-              rel="noopener noreferrer"
-              css={`
-                margin-top: 5px;
-                margin-right: 5px;
-                -webkit-app-region: no-drag;
-              `}
-            >
-              <Logo size={35} pointerCursor />
-            </a>
-          </div>
-        </>
+        <div>
+          <DevtoolButton />
+          <a
+            href="https://rp.tribbe.dev/"
+            rel="noopener noreferrer"
+            css={`
+              margin-top: 5px;
+              margin-right: 5px;
+              -webkit-app-region: no-drag;
+            `}
+          >
+            <Logo size={35} pointerCursor />
+          </a>
+        </div>
       )}
     </MainContainer>
   );

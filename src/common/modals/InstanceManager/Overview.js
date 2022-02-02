@@ -2,7 +2,6 @@ import React, { useState, useEffect, memo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import fss from 'fs-extra';
 import path from 'path';
-import os from 'os';
 import omit from 'lodash/omit';
 import { useDebouncedCallback } from 'use-debounce';
 import styled from 'styled-components';
@@ -30,7 +29,13 @@ import {
   updateInstanceConfig
 } from '../../reducers/actions';
 import { openModal } from '../../reducers/modals/actions';
-import { convertMinutesToHumanTime } from '../../utils';
+import {
+  convertMinutesToHumanTime,
+  marks,
+  scaleMem,
+  scaleMemInv,
+  sysMemScaled
+} from '../../utils';
 import { CURSEFORGE } from '../../utils/constants';
 
 const Container = styled.div`
@@ -96,7 +101,8 @@ const JavaManagerRow = styled.div`
 `;
 
 const JavaMemorySlider = styled(Slider)`
-  margin: 30px 10px 55px 0 !important;
+  margin: 10px 40px 55px 40px !important;
+  flex: 1;
 `;
 
 const JavaResetButton = styled(Button)`
@@ -118,19 +124,6 @@ const ResolutionInputContainer = styled.div`
     align-items: center;
   }
 `;
-
-const maxMemorySlider = Math.round(os.totalmem() / 1024 / 1024 / 1024) * 1024;
-
-function getMarks() {
-  const totalMarks = {};
-  const totalMemory = Math.round(os.totalmem() / 1024 / 1024 / 1024);
-  const b2TotalMemory = Math.floor(Math.log2(totalMemory));
-  for (let b2Counter = b2TotalMemory; b2Counter > 0; b2Counter -= 1) {
-    const mbOfRAM = 2 ** b2Counter * 1024;
-    totalMarks[mbOfRAM] = `${mbOfRAM} MB`;
-  }
-  return totalMarks;
-}
 
 const Card = memo(
   ({ title, children, color, icon, instanceName, defaultValue }) => {
@@ -192,7 +185,9 @@ const Overview = ({ instanceName, background, manifest }) => {
   const defaultJavaPath = useSelector(state =>
     _getJavaPath(state)(javaVersion)
   );
-  const [javaLocalMemory, setJavaLocalMemory] = useState(config?.javaMemory);
+  const [javaLocalMemory, setJavaLocalMemory] = useState(
+    scaleMem(config?.javaMemory)
+  );
   const [javaLocalArguments, setJavaLocalArguments] = useState(
     config?.javaArgs
   );
@@ -213,7 +208,7 @@ const Overview = ({ instanceName, background, manifest }) => {
     dispatch(
       updateInstanceConfig(instanceName, prev => ({
         ...prev,
-        javaMemory: v
+        javaMemory: Math.round(scaleMemInv(v))
       }))
     );
   };
@@ -501,18 +496,31 @@ const Overview = ({ instanceName, background, manifest }) => {
               }}
             />
           </JavaManagerRow>
-          {javaLocalMemory && (
-            <div>
+          {(javaLocalMemory || null) && (
+            <div
+              css={`
+                display: flex;
+              `}
+            >
               <JavaMemorySlider
                 onAfterChange={updateJavaMemory}
-                onChange={setJavaLocalMemory}
-                value={javaLocalMemory}
-                min={1024}
-                max={maxMemorySlider}
-                step={512}
-                marks={getMarks()}
+                onChange={v => setJavaLocalMemory(Math.round(scaleMemInv(v)))}
+                value={scaleMem(javaLocalMemory)}
+                min={0}
+                max={sysMemScaled}
+                step={0.1}
+                marks={marks}
                 valueLabelDisplay="auto"
               />
+              <div
+                css={`
+                  display: grid;
+                  place-items: center;
+                  width: 100px;
+                `}
+              >
+                {javaLocalMemory} MB
+              </div>
             </div>
           )}
           <JavaManagerRow>

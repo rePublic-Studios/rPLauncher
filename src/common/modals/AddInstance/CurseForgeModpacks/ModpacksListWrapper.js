@@ -39,7 +39,7 @@ const ModpacksListWrapper = ({
   const itemCount = hasNextPage ? items.length + 1 : items.length;
   // Only load 1 page of items at a time.
   // Pass an empty callback to InfiniteLoader in case it asks us to load more than once.
-  const loadMoreItems = isNextPageLoading ? () => { } : loadNextPage;
+  const loadMoreItems = isNextPageLoading ? () => {} : loadNextPage;
   // Every row is loaded except for our loading indicator row.
   const isItemLoaded = index => !hasNextPage || index < items.length;
 

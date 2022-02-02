@@ -98,7 +98,7 @@ const InstanceCrashed = ({ code, errorLogs }) => {
                   color: black;
                 `}
               >
-                <>Error Log</> &nbsp;
+                Error Log &nbsp;
                 <Tooltip title={copiedLog ? 'Copied' : 'Copy'} placement="top">
                   <div
                     css={`

@@ -79,7 +79,8 @@ const modalsComponentLookupTable = {
   ),
   PolicyModal: AsyncComponent(lazy(() => import('../modals/PolicyModal'))),
   InstanceDownloadFailed: AsyncComponent(
-    lazy(() => import('../modals/InstanceDownloadFailed.js')))
+    lazy(() => import('../modals/InstanceDownloadFailed'))
+  )
 };
 
 const ModalContainer = ({

@@ -87,7 +87,7 @@ const RowContainer = styled.div.attrs(props => ({
     transition: color 0.1s ease-in-out;
     height: 100%;
     ${props =>
-    props.isHovered ? `color: ${props.theme.palette.text.primary};` : ''}
+      props.isHovered ? `color: ${props.theme.palette.text.primary};` : ''}
     cursor: pointer;
     svg {
       margin-right: 10px;

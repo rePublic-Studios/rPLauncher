@@ -84,11 +84,9 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
       <FormContainer>
         <h1>{getSelectedService()}</h1>
         {loginFailed && (
-          <>
-            <LoginFailMessage>
-              {loginFailed?.message ? loginFailed.message : loginFailed}
-            </LoginFailMessage>
-          </>
+          <LoginFailMessage>
+            {loginFailed?.message ? loginFailed.message : loginFailed}
+          </LoginFailMessage>
         )}
         <StyledInput
           disabled={!!username}
@@ -115,11 +113,9 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
       <FormContainer>
         <h1>{getSelectedService()}</h1>
         {loginFailed && (
-          <>
-            <LoginFailMessage>
-              {loginFailed?.message ? loginFailed.message : loginFailed}
-            </LoginFailMessage>
-          </>
+          <LoginFailMessage>
+            {loginFailed?.message ? loginFailed.message : loginFailed}
+          </LoginFailMessage>
         )}
         <StyledInput
           disabled={!!username}
@@ -180,11 +176,9 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
       <FormContainer>
         <h1>{getSelectedService()}</h1>
         {loginFailed && (
-          <>
-            <LoginFailMessage>
-              {loginFailed?.message ? loginFailed.message : loginFailed}
-            </LoginFailMessage>
-          </>
+          <LoginFailMessage>
+            {loginFailed?.message ? loginFailed.message : loginFailed}
+          </LoginFailMessage>
         )}
         <StyledInput
           disabled={!!username}

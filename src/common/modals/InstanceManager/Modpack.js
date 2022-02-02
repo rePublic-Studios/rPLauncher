@@ -51,7 +51,8 @@ const Modpack = ({ modpackId, instanceName, manifest, fileID }) => {
       const ftbModpack = await getFTBModpackData(modpackId);
 
       setVersionName(
-        `${ftbModpack.name} - ${ftbModpack.versions.find(modpack => modpack.id === fileID).name
+        `${ftbModpack.name} - ${
+          ftbModpack.versions.find(modpack => modpack.id === fileID).name
         }`
       );
 

@@ -26,7 +26,7 @@ import pMap from 'p-map';
 import makeDir from 'make-dir';
 import { major, minor, patch, prerelease } from 'semver';
 import { generate as generateRandomString } from 'randomstring';
-import fxp from 'fast-xml-parser';
+import { XMLParser } from 'fast-xml-parser';
 import * as ActionTypes from './actionTypes';
 import {
   ACCOUNT_MOJANG,
@@ -129,7 +129,7 @@ import { UPDATE_CONCURRENT_DOWNLOADS } from './settings/actionTypes';
 import { UPDATE_MODAL } from './modals/actionTypes';
 import PromiseQueue from '../../app/desktop/utils/PromiseQueue';
 import fmlLibsMapping from '../../app/desktop/utils/fmllibs';
-import { openModal } from './modals/actions';
+import { openModal, closeModal } from './modals/actions';
 import forgePatcher from '../utils/forgePatcher';
 
 export function initManifests() {
@@ -252,8 +252,9 @@ export function initNews() {
     if (news.length === 0 && !minecraftNews.isRequesting) {
       try {
         const { data: newsXml } = await axios.get(NEWS_URL);
+        const parser = new XMLParser();
         const newsArr =
-          fxp.parse(newsXml)?.rss?.channel?.item?.map(newsEntry => ({
+          parser.parse(newsXml)?.rss?.channel?.item?.map(newsEntry => ({
             title: newsEntry.title,
             description: newsEntry.description,
             image: `https://minecraft.net${newsEntry.imageURL}`,
@@ -1783,7 +1784,7 @@ export function processFTBManifest(instanceName) {
 
     for (const item of exactMatches) {
       if (item.file) {
-        fileHashes[item.file.packageFingerprint] = item;
+        fileHashes[item.file.fileFingerprint] = item;
       }
     }
 
@@ -1807,12 +1808,12 @@ export function processFTBManifest(instanceName) {
             const exactMatch = fileHashes[item.murmur2];
 
             if (exactMatch) {
-              const { projectId } = exactMatch.file;
+              const { modId } = exactMatch.file;
               try {
-                const addon = await getAddon(projectId);
+                const addon = await getAddon(modId);
                 const mod = normalizeModData(
                   exactMatch.file,
-                  projectId,
+                  modId,
                   addon.name
                 );
                 mod.fileName = path.basename(item.name);
@@ -2430,10 +2431,10 @@ export const startListener = () => {
             if (exactMatch) {
               let addon = null;
               try {
-                addon = await getAddon(exactMatch.file.projectId);
+                addon = await getAddon(exactMatch.file.modId);
                 mod = normalizeModData(
                   exactMatch.file,
-                  exactMatch.file.projectId,
+                  exactMatch.file.modId,
                   addon.name
                 );
                 mod.fileName = path.basename(fileName);
@@ -3130,10 +3131,11 @@ export function launchInstance(instanceName, forceQuit = false) {
         ? getJVMArguments113
         : getJVMArguments112;
 
-    const javaArguments = `${account.accountType === ACCOUNT_ELYBY
-      ? `-javaagent:${exeData}\\authlib-injector.jar=ely.by`
-      : ``
-      } ${javaArgs !== undefined ? javaArgs : args}`.split(' ');
+    const javaArguments = `${
+      account.accountType === ACCOUNT_ELYBY
+        ? `-javaagent:${exeData}\\authlib-injector.jar=ely.by`
+        : ``
+    } ${javaArgs !== undefined ? javaArgs : args}`.split(' ');
     const javaMem = javaMemory !== undefined ? javaMemory : memory;
     const gameResolution = instanceResolution || globalMinecraftResolution;
 
@@ -3171,8 +3173,8 @@ export function launchInstance(instanceName, forceQuit = false) {
     const loggingPath = path.join(
       assetsPath,
       'objects',
-      loggingHash.substring(0, 2),
-      loggingId
+      loggingHash?.substring(0, 2) || '',
+      loggingId || ''
     );
 
     console.log(
@@ -3199,6 +3201,8 @@ export function launchInstance(instanceName, forceQuit = false) {
     if (state.settings.hideWindowOnGameLaunch) {
       await ipcRenderer.invoke('hide-window');
     }
+
+    let closed = false;
 
     const ps = spawn(
       `"${javaPath}"`,
@@ -3248,6 +3252,20 @@ export function launchInstance(instanceName, forceQuit = false) {
     ps.stderr.on('data', data => {
       console.error(`ps stderr: ${data}`);
       errorLogs += data || '';
+
+      if (
+        data.toString().includes('Setting user:') ||
+        data.toString().includes('Initializing LWJGL OpenAL')
+      ) {
+        if (
+          !closed &&
+          getState().modals.find(v => v.modalType === 'InstanceStartupAd')
+        ) {
+          closed = true;
+          dispatch(closeModal());
+        }
+        dispatch(updateStartedInstance({ instanceName, initialized: true }));
+      }
     });
 
     ps.on('close', async code => {
@@ -3299,7 +3317,7 @@ export function installMod(
     const instancePath = path.join(instancesPath, instanceName);
     const instance = _getInstance(state)(instanceName);
     const mainModData = await getAddonFile(projectID, fileID);
-    const addon = await getAddon(projectId);
+    const addon = await getAddon(projectID);
     mainModData.projectID = projectID;
     const destFile = path.join(instancePath, 'mods', mainModData.fileName);
     const tempFile = path.join(_getTempPath(state), mainModData.fileName);
@@ -3337,7 +3355,7 @@ export function installMod(
       try {
         await fse.access(destFile);
         const murmur2 = await getFileMurmurHash2(destFile);
-        if (murmur2 !== mainModData.packageFingerprint) {
+        if (murmur2 !== mainModData.fileFingerprint) {
           await downloadFile(destFile, mainModData.downloadUrl, onProgress);
         }
       } catch {
