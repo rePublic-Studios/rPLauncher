@@ -32,7 +32,7 @@ const SocialButtons = () => {
         }
       `}
     >
-      <a href="https://rp.tribbe.dev/discord">
+      <a href="https://discord.gg/tzebdd9AsM">
         <div>
           <FontAwesomeIcon icon={faDiscord} size="lg" />
         </div>

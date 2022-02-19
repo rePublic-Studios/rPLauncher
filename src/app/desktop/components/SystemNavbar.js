@@ -192,6 +192,18 @@ const SystemNavbar = () => {
             <Logo size={35} pointerCursor />
           </a>
           <DevtoolButton />
+
+          <div
+            css={`
+              color: red;
+              font-weight: bold;
+            `}
+          >
+            Dont forget to migrate your Mojang Account to a Microsoft account
+            <br />
+            On March 10th 2022 the possibility of logging in with a Mojang
+            account will be removed
+          </div>
         </div>
       )}
       <Container os={isOsx}>
