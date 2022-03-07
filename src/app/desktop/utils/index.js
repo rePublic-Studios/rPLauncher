@@ -951,9 +951,9 @@ const getBase64 = url => {
 export const mojangPlayerSkinService = async uuid => {
   let skin = defaultskin;
   try {
-    const playerSkin = await mojangSessionServerUrl('profile', uuid);
-    if (playerSkin.status === 204) return skin;
-    const data = playerSkin;
+    const playerTexture = await mojangSessionServerUrl('profile', uuid);
+    if (playerTexture.status === 204) return skin;
+    const { data } = playerTexture;
     const base64 = data.properties[0].value;
     const decoded = JSON.parse(Buffer.from(base64, 'base64').toString());
 
@@ -970,7 +970,7 @@ export const elyByPlayerSkinService = async name => {
   try {
     const playerTexture = await elyBySkinSystemUrl('textures', name);
     if (playerTexture.status === 204) return skin;
-    const data = playerTexture;
+    const { data } = playerTexture;
 
     if (data?.SKIN?.url) {
       skin = await getBase64(data?.SKIN?.url);

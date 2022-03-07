@@ -476,14 +476,15 @@ export function elyByLogin(username, password, redirect = true) {
       throw new Error('No username or password provided');
     }
     try {
-      let data = null;
+      let request = null;
       try {
-        data = await mcElyByAuthenticate(username, password, clientToken);
-        data.accountType = ACCOUNT_ELYBY;
+        request = await mcElyByAuthenticate(username, password, clientToken);
       } catch (err) {
         console.error(err);
         throw new Error('Invalid username or password.');
       }
+      const { data } = request;
+      data.accountType = ACCOUNT_ELYBY;
 
       if (!data?.selectedProfile?.name) {
         throw new Error("It looks like you didn't create an account.");
@@ -743,15 +744,19 @@ export function loginWithAccessToken(redirect = true) {
             dispatch(updateAccount(data.selectedProfile.id, data));
             dispatch(updateCurrentAccountId(data.selectedProfile.id));
           } else if (accountType === ACCOUNT_ELYBY) {
-            const data = await mcElyByRefresh(accessToken, clientToken);
-            const skinUrl = await elyByPlayerSkinService(
-              data.selectedProfile.name
-            );
-            if (skinUrl) {
-              data.skin = skinUrl;
+            const response = await mcElyByRefresh(accessToken, clientToken);
+            if (response.status === 200) {
+              const { data } = response;
+              const skinUrl = await elyByPlayerSkinService(
+                data.selectedProfile.name
+              );
+              console.log(skinUrl);
+              if (skinUrl) {
+                data.skin = skinUrl;
+              }
+              dispatch(updateAccount(data.selectedProfile.id, data));
+              dispatch(updateCurrentAccountId(data.selectedProfile.id));
             }
-            dispatch(updateAccount(data.selectedProfile.id, data));
-            dispatch(updateCurrentAccountId(data.selectedProfile.id));
           }
           if (redirect) {
             dispatch(push('/home'));
@@ -947,6 +952,7 @@ export function loginOAuth(redirect = true) {
 
       let mcUserId = null;
       let mcUserName = null;
+      console.log(await msMinecraftProfile(mcAccessToken));
       try {
         ({
           data: { id: mcUserId, name: mcUserName }

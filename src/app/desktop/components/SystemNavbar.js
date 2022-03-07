@@ -2,6 +2,7 @@ import React, { useEffect, useState, memo } from 'react';
 import { ipcRenderer } from 'electron';
 import styled from 'styled-components';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import axios from 'axios';
 import {
   faWindowMinimize,
   faWindowMaximize,
@@ -12,6 +13,7 @@ import {
   faDownload
 } from '@fortawesome/free-solid-svg-icons';
 import { useSelector, useDispatch } from 'react-redux';
+import { RP_API_URL } from '../../../common/utils/constants';
 import { openModal, closeModal } from '../../../common/reducers/modals/actions';
 import {
   checkForPortableUpdates,
@@ -100,6 +102,17 @@ const SystemNavbar = () => {
   const isUpdateAvailable = useSelector(state => state.updateAvailable);
   const location = useSelector(state => state.router.location.pathname);
   const [isAppImage, setIsAppImage] = useState(false);
+  const [annoucement, setAnnoucement] = useState(null);
+
+  useEffect(() => {
+    const init = async () => {
+      const url = `${RP_API_URL}/announcement`;
+      const { data } = await axios.get(url);
+      setAnnoucement(data || null);
+    };
+
+    init();
+  }, []);
 
   const checkForUpdates = async () => {
     const isAppImageVar = await ipcRenderer.invoke('isAppImage');
@@ -193,17 +206,24 @@ const SystemNavbar = () => {
           </a>
           <DevtoolButton />
 
-          <div
-            css={`
-              color: red;
-              font-weight: bold;
-            `}
-          >
-            Dont forget to migrate your Mojang Account to a Microsoft account
-            <br />
-            On March 10th 2022 the possibility of logging in with a Mojang
-            account will be removed
-          </div>
+          {annoucement ? (
+            <div
+              css={`
+                margin-top: 1px;
+                padding: 15px;
+                font-size: 9px;
+                font-weight: bold;
+                color: ${props => props.theme.palette.colors.yellow};
+              `}
+            >
+              {annoucement.map(text => (
+                <>
+                  {text}
+                  <br />
+                </>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
       <Container os={isOsx}>
