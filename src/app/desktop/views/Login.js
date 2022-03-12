@@ -180,6 +180,7 @@ const Login = () => {
   // };
 
   const authenticateElyBy = () => {
+    if (!email || !password) return;
     dispatch(requesting('accountAuthentication'));
     setTimeout(() => {
       dispatch(

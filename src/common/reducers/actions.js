@@ -813,55 +813,50 @@ export function loginLocalWithoutAccessToken() {
   };
 }
 
-// export function loginThroughNativeLauncher() {
-//   return async (dispatch, getState) => {
-//     const {
-//       app: { isNewUser }
-//     } = getState();
-
-//     const homedir = await ipcRenderer.invoke('getAppdataPath');
-//     const mcFolder = process.platform === 'darwin' ? 'minecraft' : '.minecraft';
-//     const vanillaMCPath =
-//       process.platform === 'linux'
-//         ? path.resolve(homedir, '../', mcFolder)
-//         : path.join(homedir, mcFolder);
-//     const vnlJson = await fse.readJson(
-//       path.join(vanillaMCPath, 'launcher_profiles.json')
-//     );
-
-//     try {
-//       const { clientToken } = vnlJson;
-//       const { account } = vnlJson.selectedUser;
-//       const { accessToken } = vnlJson.authenticationDatabase[account];
-
-//       const data = await mcRefresh(accessToken, clientToken);
-//       data.accountType = ACCOUNT_MOJANG;
-//       const skinUrl = await mojangPlayerSkinService(data.selectedProfile.id);
-//       if (skinUrl) {
-//         data.skin = skinUrl;
-//       }
-
-//       // We need to update the accessToken in launcher_profiles.json
-//       vnlJson.authenticationDatabase[account].accessToken = data.accessToken;
-//       await fse.outputJson(
-//         path.join(vanillaMCPath, 'launcher_profiles.json'),
-//         vnlJson
-//       );
-
-//       dispatch(updateAccount(data.selectedProfile.id, data));
-//       dispatch(updateCurrentAccountId(data.selectedProfile.id));
-
-//       if (isNewUser) {
-//         dispatch(updateIsNewUser(false));
-//         dispatch(push('/onboarding'));
-//       } else {
-//         dispatch(push('/home'));
-//       }
-//     } catch (err) {
-//       throw new Error(err);
-//     }
-//   };
-// }
+export function loginThroughNativeLauncher() {
+  return async () => {};
+  // return async (dispatch, getState) => {
+  //   const {
+  //     app: { isNewUser }
+  //   } = getState();
+  //   const homedir = await ipcRenderer.invoke('getAppdataPath');
+  //   const mcFolder = process.platform === 'darwin' ? 'minecraft' : '.minecraft';
+  //   const vanillaMCPath =
+  //     process.platform === 'linux'
+  //       ? path.resolve(homedir, '../', mcFolder)
+  //       : path.join(homedir, mcFolder);
+  //   const vnlJson = await fse.readJson(
+  //     path.join(vanillaMCPath, 'launcher_profiles.json')
+  //   );
+  //   try {
+  //     const { clientToken } = vnlJson;
+  //     const { account } = vnlJson.selectedUser;
+  //     const { accessToken } = vnlJson.authenticationDatabase[account];
+  //     const data = await mcRefresh(accessToken, clientToken);
+  //     data.accountType = ACCOUNT_MOJANG;
+  //     const skinUrl = await mojangPlayerSkinService(data.selectedProfile.id);
+  //     if (skinUrl) {
+  //       data.skin = skinUrl;
+  //     }
+  //     // We need to update the accessToken in launcher_profiles.json
+  //     vnlJson.authenticationDatabase[account].accessToken = data.accessToken;
+  //     await fse.outputJson(
+  //       path.join(vanillaMCPath, 'launcher_profiles.json'),
+  //       vnlJson
+  //     );
+  //     dispatch(updateAccount(data.selectedProfile.id, data));
+  //     dispatch(updateCurrentAccountId(data.selectedProfile.id));
+  //     if (isNewUser) {
+  //       dispatch(updateIsNewUser(false));
+  //       dispatch(push('/onboarding'));
+  //     } else {
+  //       dispatch(push('/home'));
+  //     }
+  //   } catch (err) {
+  //     throw new Error(err);
+  //   }
+  // };
+}
 
 export function loginOAuth(redirect = true) {
   return async (dispatch, getState) => {
