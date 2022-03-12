@@ -9,14 +9,14 @@ import Modal from '../components/Modal';
 import { load } from '../reducers/loading/actions';
 import features from '../reducers/loading/features';
 import {
-  mojangLogin,
+  // mojangLogin,
   elyByLogin,
   loginOAuth,
   localLogin
 } from '../reducers/actions';
 import { closeModal } from '../reducers/modals/actions';
 import {
-  ACCOUNT_MOJANG,
+  // ACCOUNT_MOJANG,
   ACCOUNT_ELYBY,
   ACCOUNT_MICROSOFT,
   ACCOUNT_LOCAL
@@ -26,24 +26,22 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState(username || '');
   const [password, setPassword] = useState('');
-  const [accountType, setAccountType] = useState(
-    _accountType || ACCOUNT_MOJANG
-  );
+  const [accountType, setAccountType] = useState(_accountType || ACCOUNT_ELYBY);
   const [loginFailed, setLoginFailed] = useState(loginmessage || '');
 
-  const addMojangAccount = () => {
-    dispatch(
-      load(
-        features.mcAuthentication,
-        dispatch(mojangLogin(email, password, false))
-      )
-    )
-      .then(() => dispatch(closeModal()))
-      .catch(error => {
-        console.error(error);
-        setLoginFailed(error);
-      });
-  };
+  // const addMojangAccount = () => {
+  //   dispatch(
+  //     load(
+  //       features.mcAuthentication,
+  //       dispatch(mojangLogin(email, password, false))
+  //     )
+  //   )
+  //     .then(() => dispatch(closeModal()))
+  //     .catch(error => {
+  //       console.error(error);
+  //       setLoginFailed(error);
+  //     });
+  // };
 
   const addElyByAccount = () => {
     dispatch(
@@ -79,34 +77,34 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
       });
   };
 
-  const renderAddMojangAccount = () => (
-    <Container>
-      <FormContainer>
-        <h1>{getSelectedService()}</h1>
-        {loginFailed && (
-          <LoginFailMessage>
-            {loginFailed?.message ? loginFailed.message : loginFailed}
-          </LoginFailMessage>
-        )}
-        <StyledInput
-          disabled={!!username}
-          placeholder="Email"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-        />
-        <StyledInput
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addMojangAccount()}
-        />
-      </FormContainer>
-      <FormContainer>
-        <StyledButton onClick={addMojangAccount}>Add Account</StyledButton>
-      </FormContainer>
-    </Container>
-  );
+  // const renderAddMojangAccount = () => (
+  //   <Container>
+  //     <FormContainer>
+  //       <h1>{getSelectedService()}</h1>
+  //       {loginFailed && (
+  //         <LoginFailMessage>
+  //           {loginFailed?.message ? loginFailed.message : loginFailed}
+  //         </LoginFailMessage>
+  //       )}
+  //       <StyledInput
+  //         disabled={!!username}
+  //         placeholder="Email"
+  //         value={email}
+  //         onChange={e => setEmail(e.target.value)}
+  //       />
+  //       <StyledInput
+  //         type="password"
+  //         placeholder="Password"
+  //         value={password}
+  //         onChange={e => setPassword(e.target.value)}
+  //         onKeyDown={e => e.key === 'Enter' && addMojangAccount()}
+  //       />
+  //     </FormContainer>
+  //     <FormContainer>
+  //       <StyledButton onClick={addMojangAccount}>Add Account</StyledButton>
+  //     </FormContainer>
+  //   </Container>
+  // );
 
   const renderAddElyByAccount = () => (
     <Container>
@@ -200,7 +198,7 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
       selectedKeys={[accountType]}
       overflowedIndicator={null}
     >
-      <StyledAccountMenuItem
+      {/* <StyledAccountMenuItem
         key={ACCOUNT_MOJANG}
         onClick={() => {
           setAccountType(ACCOUNT_MOJANG);
@@ -208,7 +206,7 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
         }}
       >
         Mojang Login
-      </StyledAccountMenuItem>
+      </StyledAccountMenuItem> */}
       <StyledAccountMenuItem
         key={ACCOUNT_ELYBY}
         onClick={() => {
@@ -243,9 +241,9 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
   const getSelectedService = () => {
     let service = '';
     switch (accountType) {
-      case ACCOUNT_MOJANG:
-        service = 'Mojang Login';
-        break;
+      // case ACCOUNT_MOJANG:
+      //   service = 'Mojang Login';
+      //   break;
       case ACCOUNT_ELYBY:
         service = 'Ely.By Login';
         break;
@@ -293,7 +291,7 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
         </Button>
       </Dropdown>
       <Container>
-        {accountType === ACCOUNT_MOJANG ? renderAddMojangAccount() : null}
+        {/* {accountType === ACCOUNT_MOJANG ? renderAddMojangAccount() : null} */}
         {accountType === ACCOUNT_ELYBY ? renderAddElyByAccount() : null}
         {accountType === ACCOUNT_MICROSOFT ? renderAddMicrosoftAccount() : null}
         {accountType === ACCOUNT_LOCAL ? renderAddLocalAccount() : null}

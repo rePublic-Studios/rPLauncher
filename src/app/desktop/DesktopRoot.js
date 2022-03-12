@@ -11,7 +11,7 @@ import {
   loginWithAccessToken,
   initManifests,
   initNews,
-  loginThroughNativeLauncher,
+  // loginThroughNativeLauncher,
   switchToFirstValidAccount,
   checkClientToken,
   updateUserData,
@@ -154,11 +154,11 @@ function DesktopRoot({ store }) {
       ).catch(() => {
         dispatch(switchToFirstValidAccount());
       });
-    } else {
+    } /* else {
       dispatch(
         load(features.mcAuthentication, dispatch(loginThroughNativeLauncher()))
       ).catch(console.error);
-    }
+    } */
 
     if (shouldShowDiscordRPC) {
       ipcRenderer.invoke('init-discord-rpc');

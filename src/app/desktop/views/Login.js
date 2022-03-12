@@ -9,7 +9,7 @@ import { Input, Button, Menu, Dropdown } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useKey } from 'rooks';
 import {
-  mojangLogin,
+  // mojangLogin,
   elyByLogin,
   loginOAuth,
   localLogin
@@ -20,7 +20,7 @@ import backgroundVideo from '../../../common/assets/background.webm';
 import HorizontalLogo from '../../../ui/HorizontalLogo';
 import { openModal } from '../../../common/reducers/modals/actions';
 import {
-  ACCOUNT_MOJANG,
+  // ACCOUNT_MOJANG,
   ACCOUNT_ELYBY,
   ACCOUNT_MICROSOFT,
   ACCOUNT_LOCAL
@@ -159,25 +159,25 @@ const Login = () => {
   const [password, setPassword] = useState(null);
   const [version, setVersion] = useState(null);
   const [loginFailed, setLoginFailed] = useState(false);
-  const [selectedSerivce, setSelectedService] = useState('Mojang Account');
+  const [selectedSerivce, setSelectedService] = useState('Ely.By Account');
   const loading = useSelector(
     state => state.loading.accountAuthentication.isRequesting
   );
-  const [accountType, setAccountType] = useState(ACCOUNT_MOJANG);
+  const [accountType, setAccountType] = useState(ACCOUNT_ELYBY);
 
-  const authenticateMojang = () => {
-    if (!email || !password) return;
-    dispatch(requesting('accountAuthentication'));
-    setTimeout(() => {
-      dispatch(
-        load(features.mcAuthentication, dispatch(mojangLogin(email, password)))
-      ).catch(e => {
-        console.error(e);
-        setLoginFailed(e);
-        setPassword(null);
-      });
-    }, 1000);
-  };
+  // const authenticateMojang = () => {
+  //   if (!email || !password) return;
+  //   dispatch(requesting('accountAuthentication'));
+  //   setTimeout(() => {
+  //     dispatch(
+  //       load(features.mcAuthentication, dispatch(mojangLogin(email, password)))
+  //     ).catch(e => {
+  //       console.error(e);
+  //       setLoginFailed(e);
+  //       setPassword(null);
+  //     });
+  //   }, 1000);
+  // };
 
   const authenticateElyBy = () => {
     dispatch(requesting('accountAuthentication'));
@@ -218,84 +218,84 @@ const Login = () => {
     }, 1000);
   };
 
-  const renderLoginMojangAccount = () => (
-    <Container>
-      <p>Sign in with your Mojang Account</p>
-      <Form>
-        <div>
-          <Input
-            placeholder="Email"
-            value={email}
-            onChange={({ target: { value } }) => setEmail(value)}
-            css={`
-              backdrop-filter: blur(16px) saturate(180%);
-              background-color: rgba(17, 25, 40, 0.75);
-              border-radius: 12px;
-              border: 1px solid rgba(255, 255, 255, 0.125);
-            `}
-          />
-        </div>
-        <div>
-          <Input
-            placeholder="Password"
-            type="password"
-            value={password}
-            onChange={({ target: { value } }) => setPassword(value)}
-            onKeyDown={e => e.key === 'Enter' && authenticateMojang()}
-            css={`
-              backdrop-filter: blur(16px) saturate(180%);
-              background-color: rgba(17, 25, 40, 0.75);
-              border-radius: 12px;
-              border: 1px solid rgba(255, 255, 255, 0.125);
-            `}
-          />
-        </div>
-        {loginFailed && (
-          <LoginFailMessage>{loginFailed?.message}</LoginFailMessage>
-        )}
-        <LoginButton color="primary" onClick={authenticateMojang}>
-          Sign In
-          <FontAwesomeIcon
-            css={`
-              margin-left: 6px;
-            `}
-            icon={faArrowRight}
-          />
-        </LoginButton>
-      </Form>
-      <Footer>
-        <div
-          css={`
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            width: 100%;
-          `}
-        >
-          <FooterLinks>
-            <div>
-              <a href="https://my.minecraft.net/en-us/store/minecraft/#register">
-                CREATE AN ACCOUNT
-              </a>
-            </div>
-            <div>
-              <a href="https://my.minecraft.net/en-us/password/forgot/">
-                FORGOT PASSWORD
-              </a>
-            </div>
-          </FooterLinks>
-          <div
-            css={`
-              cursor: pointer;
-            `}
-            onClick={() => dispatch(openModal('ChangeLogs'))}
-          >
-            v{version}
-          </div>
-        </div>
-      </Footer>
-    </Container>
-  );
+  // const renderLoginMojangAccount = () => (
+  //   <Container>
+  //     <p>Sign in with your Mojang Account</p>
+  //     <Form>
+  //       <div>
+  //         <Input
+  //           placeholder="Email"
+  //           value={email}
+  //           onChange={({ target: { value } }) => setEmail(value)}
+  //           css={`
+  //             backdrop-filter: blur(16px) saturate(180%);
+  //             background-color: rgba(17, 25, 40, 0.75);
+  //             border-radius: 12px;
+  //             border: 1px solid rgba(255, 255, 255, 0.125);
+  //           `}
+  //         />
+  //       </div>
+  //       <div>
+  //         <Input
+  //           placeholder="Password"
+  //           type="password"
+  //           value={password}
+  //           onChange={({ target: { value } }) => setPassword(value)}
+  //           onKeyDown={e => e.key === 'Enter' && authenticateMojang()}
+  //           css={`
+  //             backdrop-filter: blur(16px) saturate(180%);
+  //             background-color: rgba(17, 25, 40, 0.75);
+  //             border-radius: 12px;
+  //             border: 1px solid rgba(255, 255, 255, 0.125);
+  //           `}
+  //         />
+  //       </div>
+  //       {loginFailed && (
+  //         <LoginFailMessage>{loginFailed?.message}</LoginFailMessage>
+  //       )}
+  //       <LoginButton color="primary" onClick={authenticateMojang}>
+  //         Sign In
+  //         <FontAwesomeIcon
+  //           css={`
+  //             margin-left: 6px;
+  //           `}
+  //           icon={faArrowRight}
+  //         />
+  //       </LoginButton>
+  //     </Form>
+  //     <Footer>
+  //       <div
+  //         css={`
+  //           display: flex;
+  //           justify-content: space-between;
+  //           align-items: flex-end;
+  //           width: 100%;
+  //         `}
+  //       >
+  //         <FooterLinks>
+  //           <div>
+  //             <a href="https://my.minecraft.net/en-us/store/minecraft/#register">
+  //               CREATE AN ACCOUNT
+  //             </a>
+  //           </div>
+  //           <div>
+  //             <a href="https://my.minecraft.net/en-us/password/forgot/">
+  //               FORGOT PASSWORD
+  //             </a>
+  //           </div>
+  //         </FooterLinks>
+  //         <div
+  //           css={`
+  //             cursor: pointer;
+  //           `}
+  //           onClick={() => dispatch(openModal('ChangeLogs'))}
+  //         >
+  //           v{version}
+  //         </div>
+  //       </div>
+  //     </Footer>
+  //   </Container>
+  // );
 
   const renderLoginElyByAccount = () => (
     <Container>
@@ -470,7 +470,7 @@ const Login = () => {
     </Container>
   );
 
-  useKey(['Enter'], authenticateMojang);
+  useKey(['Enter'], authenticateElyBy);
 
   useEffect(() => {
     ipcRenderer.invoke('getAppVersion').then(setVersion).catch(console.error);
@@ -489,7 +489,7 @@ const Login = () => {
       selectedKeys={[accountType]}
       overflowedIndicator={null}
     >
-      <StyledAccountMenuItem
+      {/* <StyledAccountMenuItem
         key={ACCOUNT_MOJANG}
         onClick={() => {
           setAccountType(ACCOUNT_MOJANG);
@@ -498,7 +498,7 @@ const Login = () => {
         }}
       >
         Mojang Account
-      </StyledAccountMenuItem>
+      </StyledAccountMenuItem> */}
       <StyledAccountMenuItem
         key={ACCOUNT_ELYBY}
         onClick={() => {
@@ -558,7 +558,7 @@ const Login = () => {
                 {selectedSerivce} <DownOutlined />
               </Button>
             </Dropdown>
-            {accountType === ACCOUNT_MOJANG ? renderLoginMojangAccount() : null}
+            {/* {accountType === ACCOUNT_MOJANG ? renderLoginMojangAccount() : null} */}
             {accountType === ACCOUNT_ELYBY ? renderLoginElyByAccount() : null}
             {accountType === ACCOUNT_MICROSOFT
               ? renderLoginMicrosoftAccount()

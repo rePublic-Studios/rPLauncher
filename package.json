@@ -1,6 +1,6 @@
 {
   "name": "rplauncher",
-  "version": "1.2.8",
+  "version": "1.2.9",
   "description": "rPLauncher is simple, yet powerful Minecraft custom launcher with a strong focus on the user experience",
   "keywords": [
     "minecraft",
@@ -40,7 +40,7 @@
     "build-electron:portable": "cross-env-shell NODE_ENV=production REACT_APP_RELEASE_TYPE=portable webpack --config ./scripts/electronWebpackConfig.js --color",
     "build-electron:setup": "cross-env-shell NODE_ENV=production REACT_APP_RELEASE_TYPE=setup webpack --config ./scripts/electronWebpackConfig.js --color",
     "build-electron:dev": "cross-env-shell NODE_ENV=development REACT_APP_RELEASE_TYPE=setup webpack --config ./scripts/electronWebpackConfig.js --color",
-    "lint": "eslint .",
+    "lint": "eslint . --fix",
     "dev": "npm run build-electron:dev && cross-env-shell NODE_ENV=development APP_TYPE=electron BROWSER=none \"npm run start-electron\"",
     "dev-web": "cross-env-shell NODE_ENV=development APP_TYPE=web npm run start",
     "deploy": "node ./scripts/createDeploy.js",
