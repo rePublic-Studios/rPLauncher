@@ -7,8 +7,8 @@
 ## Pre-built binaries:
 
 - All windows releases: https://github.com/rePublic-Studios/rPLauncher/releases
-  - [latest setup](https://github.com/rePublic-Studios/rPLauncher/releases/download/v1.3.0/rPLauncher-win-setup.exe)
-  - [latest portable](https://github.com/rePublic-Studios/rPLauncher/releases/download/v1.3.0/rPLauncher-win-portable.zip)
+  - [latest setup](https://github.com/rePublic-Studios/rPLauncher/releases/latest/download/rPLauncher-win-setup.exe)
+  - [latest portable](https://github.com/rePublic-Studios/rPLauncher/releases/latest/download/rPLauncher-win-portable.zip)
 
 # rPLauncher
 

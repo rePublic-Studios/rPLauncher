@@ -1,11 +1,12 @@
 export const RP_API_URL = 'https://api.tribbe.dev/rplauncher';
 export const GDL_LEGACYJAVAFIXER_MOD_URL =
-  'https://gdevs.io/legacyjavafixer-1.0.jar';
-export const JAVA_MANIFEST_URL = 'https://cdn.gdlauncher.com/openjdk8.json';
+  'https://cdn.tribbe.dev/rplauncher/legacyjavafixer-1.0.jar';
+export const JAVA_MANIFEST_URL =
+  'https://cdn.tribbe.dev/rplauncher/openjdk8.json';
 export const LATEST_JAVA_VERSION = 17;
 export const JAVA_LATEST_MANIFEST_URL =
-  'https://cdn.gdlauncher.com/openjdk17.json';
-export const FORGESVC_URL = 'https://api.gdlauncher.com/cf';
+  'https://cdn.tribbe.dev/rplauncher/openjdk17.json';
+export const FORGESVC_URL = 'https://api.tribbe.dev/rplauncher/cf';
 
 export const MC_MANIFEST_URL =
   'https://launchermeta.mojang.com/mc/game/version_manifest.json';

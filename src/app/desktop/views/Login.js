@@ -21,8 +21,8 @@ import HorizontalLogo from '../../../ui/HorizontalLogo';
 import { openModal } from '../../../common/reducers/modals/actions';
 import {
   // ACCOUNT_MOJANG,
-  ACCOUNT_ELYBY,
   ACCOUNT_MICROSOFT,
+  ACCOUNT_ELYBY,
   ACCOUNT_LOCAL
 } from '../../../common/utils/constants';
 
@@ -159,11 +159,11 @@ const Login = () => {
   const [password, setPassword] = useState(null);
   const [version, setVersion] = useState(null);
   const [loginFailed, setLoginFailed] = useState(false);
-  const [selectedSerivce, setSelectedService] = useState('Ely.By Account');
+  const [selectedSerivce, setSelectedService] = useState('Microsoft Account');
   const loading = useSelector(
     state => state.loading.accountAuthentication.isRequesting
   );
-  const [accountType, setAccountType] = useState(ACCOUNT_ELYBY);
+  const [accountType, setAccountType] = useState(null);
 
   // const authenticateMojang = () => {
   //   if (!email || !password) return;
@@ -375,12 +375,12 @@ const Login = () => {
     </Container>
   );
 
-  const renderLoginMicrosoftAccount = () => (
+  const renderLoginMicrosoftAccount = (selected = true) => (
     <Container>
       <p>Sign in with your Microsoft Account</p>
       <Form>
         <h2>External Login</h2>
-        {loginFailed ? (
+        {loginFailed || !selected ? (
           <>
             <LoginFailMessage>{loginFailed?.message}</LoginFailMessage>
             <StyledButton
@@ -389,7 +389,7 @@ const Login = () => {
               `}
               onClick={authenticateMicrosoft}
             >
-              Retry
+              {selected || loginFailed ? 'Retry' : 'Login'}
             </StyledButton>
           </>
         ) : (
@@ -501,16 +501,6 @@ const Login = () => {
         Mojang Account
       </StyledAccountMenuItem> */}
       <StyledAccountMenuItem
-        key={ACCOUNT_ELYBY}
-        onClick={() => {
-          setAccountType(ACCOUNT_ELYBY);
-          setLoginFailed(null);
-          setSelectedService('Ely.By Account');
-        }}
-      >
-        Ely.By Account
-      </StyledAccountMenuItem>
-      <StyledAccountMenuItem
         key={ACCOUNT_MICROSOFT}
         onClick={() => {
           setAccountType(ACCOUNT_MICROSOFT);
@@ -520,6 +510,16 @@ const Login = () => {
         }}
       >
         Microsoft Account
+      </StyledAccountMenuItem>
+      <StyledAccountMenuItem
+        key={ACCOUNT_ELYBY}
+        onClick={() => {
+          setAccountType(ACCOUNT_ELYBY);
+          setLoginFailed(null);
+          setSelectedService('Ely.By Account');
+        }}
+      >
+        Ely.By Account
       </StyledAccountMenuItem>
       <StyledAccountMenuItem
         key={ACCOUNT_LOCAL}
@@ -560,10 +560,11 @@ const Login = () => {
               </Button>
             </Dropdown>
             {/* {accountType === ACCOUNT_MOJANG ? renderLoginMojangAccount() : null} */}
-            {accountType === ACCOUNT_ELYBY ? renderLoginElyByAccount() : null}
+            {accountType === null ? renderLoginMicrosoftAccount(false) : null}
             {accountType === ACCOUNT_MICROSOFT
               ? renderLoginMicrosoftAccount()
               : null}
+            {accountType === ACCOUNT_ELYBY ? renderLoginElyByAccount() : null}
             {accountType === ACCOUNT_LOCAL ? renderLoginLocalAccount() : null}
           </LeftSide>
           <Background transitionState={transitionState}>
