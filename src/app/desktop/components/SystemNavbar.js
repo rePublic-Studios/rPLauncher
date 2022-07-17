@@ -106,10 +106,13 @@ const SystemNavbar = () => {
 
   useEffect(() => {
     const init = async () => {
-      const v = await ipcRenderer.invoke('getAppVersion');
-      const url = `${RP_API_URL}/announcement/${v}`;
-      const { data } = await axios.get(url);
-      setAnnoucement(data || null);
+      try {
+        const v = await ipcRenderer.invoke('getAppVersion');
+        const { data } = await axios.get(`${RP_API_URL}/announcement/${v}`);
+        setAnnoucement(data || null);
+      } catch (e) {
+        console.log('No announcement to show');
+      }
     };
 
     init();

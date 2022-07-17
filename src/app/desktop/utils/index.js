@@ -22,11 +22,13 @@ import {
   sortByForgeVersionDesc
 } from '../../../common/utils';
 import {
+  getAddon,
   getAddonFile,
   mojangSessionServerUrl,
   elyBySkinSystemUrl
 } from '../../../common/api';
 import { downloadFile } from './downloader';
+import browserDownload from '../../../common/utils/browserDownload';
 
 export const isDirectory = source =>
   fs.lstat(source).then(r => r.isDirectory());
@@ -923,7 +925,14 @@ export const downloadAddonZip = async (id, fileID, instancePath, tempPath) => {
   const data = await getAddonFile(id, fileID);
   const instanceManifest = path.join(instancePath, 'manifest.json');
   const zipFile = path.join(tempPath, 'addon.zip');
-  await downloadFile(zipFile, data.downloadUrl);
+  if (data.downloadUrl) {
+    await downloadFile(zipFile, data.downloadUrl);
+  } else {
+    const addon = await getAddon(id);
+
+    const addonZipUrl = `https://www.curseforge.com/minecraft/modpacks/${addon.slug}/download/${fileID}`;
+    await browserDownload(addonZipUrl, zipFile);
+  }
   // Wait 500ms to avoid `The process cannot access the file because it is being used by another process.`
   await new Promise(resolve => {
     setTimeout(() => resolve(), 500);
@@ -1035,7 +1044,7 @@ export const convertCompletePathToInstance = (f, instancesPath) => {
 };
 
 export const isMod = (fileName, instancesPath) =>
-  /^(\\|\/)([\w\d-.{}()[\]@#$%^&!\s])+((\\|\/)mods((\\|\/)(.*))(\.jar|\.disabled))$/.test(
+  /^(\\|\/)([\w\d\-.{}()[\]@#$%^&!\s])+((\\|\/)mods((\\|\/)(([^\\/])*))(\.jar|\.disabled))$/.test(
     convertCompletePathToInstance(fileName, instancesPath)
   );
 
