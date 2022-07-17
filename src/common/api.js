@@ -391,17 +391,18 @@ export const getSearch = async (
   }
 
   const params = {
-    gameId: 432,
     categoryId: categoryId || 0,
+    classId: type === 'mods' ? 6 : 4471,
+    gameId: 432,
+    gameVersion: gameVersion || '',
     pageSize,
-    index,
+    searchFilter,
     sortField,
     sortOrder: isSortDescending ? 'desc' : 'asc',
-    gameVersionTypeId: gameVersion || '',
     ...(modLoaderType === 'fabric' && { modLoaderType: 'Fabric' }),
-    classId: type === 'mods' ? 6 : 4471,
-    searchFilter
+    index
   };
+  console.log(params);
   const { data } = await axios.get(url, { params });
   return data?.data;
 };

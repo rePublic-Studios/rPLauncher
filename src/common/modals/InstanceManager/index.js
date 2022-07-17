@@ -312,7 +312,7 @@ const InstanceManager = ({ instanceName }) => {
                     animation-play-state: inherit;
                     border: solid 3px transparent;
                     border-bottom-color: ${props =>
-                    props.theme.palette.common.white};
+                      props.theme.palette.common.white};
                     border-radius: 50%;
                     content: '';
                     height: 20px;
