@@ -114,7 +114,6 @@ const RowContainerBackground = styled.div`
   position: absolute;
   left: 0;
   z-index: -1;
-
   ${props =>
     props.selected &&
     ` background: repeating-linear-gradient(
@@ -124,7 +123,6 @@ const RowContainerBackground = styled.div`
   ${props.theme.palette.primary.dark} 10px,
   ${props.theme.palette.primary.dark} 20px
   );`};
-
   ${props =>
     props.disabled &&
     !props.selected &&
@@ -196,7 +194,6 @@ export const keyFrameMoveUpDown = keyframes`
   50% {
     transform: translateY(-15px);
   }
-
 `;
 
 const OpenFolderButton = styled(FontAwesomeIcon)`
@@ -216,18 +213,14 @@ const OpenFolderButton = styled(FontAwesomeIcon)`
 const DragArrow = styled(FontAwesomeIcon)`
   ${props =>
     props.fileDrag ? props.theme.palette.primary.main : 'transparent'};
-
   color: ${props => props.theme.palette.primary.main};
-
   animation: ${keyFrameMoveUpDown} 1.5s linear infinite;
 `;
 
 const CopyTitle = styled.h1`
   ${props =>
     props.fileDrag ? props.theme.palette.primary.main : 'transparent'};
-
   color: ${props => props.theme.palette.primary.main};
-
   animation: ${keyFrameMoveUpDown} 1.5s linear infinite;
 `;
 
@@ -686,18 +679,24 @@ const Mods = ({ instanceName }) => {
   };
 
   const menu = (
-    <Menu>
-      <Menu.Item
-        key="0"
-        disabled={!hasModUpdates}
-        onClick={() => {
-          dispatch(openModal('ModsUpdater', { instanceName }));
-          setIsMenuOpen(false);
-        }}
-      >
-        Update All Mods
-      </Menu.Item>
-    </Menu>
+    <Menu
+      items={[
+        {
+          key: '0',
+          disabled: !hasModUpdates,
+          label: (
+            <div
+              onClick={() => {
+                dispatch(openModal('ModsUpdater', { instanceName }));
+                setIsMenuOpen(false);
+              }}
+            >
+              Update All Mods
+            </div>
+          )
+        }
+      ]}
+    />
   );
 
   return (
@@ -758,6 +757,8 @@ const Mods = ({ instanceName }) => {
                 try {
                   setLoadingModUpdates(true);
                   await dispatch(initLatestMods(instance.name));
+                } catch (e) {
+                  console.warn(e);
                 } finally {
                   setLoadingModUpdates(false);
                 }
@@ -770,27 +771,14 @@ const Mods = ({ instanceName }) => {
           <span
             onClick={e => {
               e.stopPropagation();
-              setIsMenuOpen(!isMenuOpen);
+              setIsMenuOpen(prev => !prev);
             }}
           >
-            <StyledDropdown
-              onClick={e => {
-                if (!isMenuOpen) {
-                  e.stopPropagation();
-                  setIsMenuOpen(!isMenuOpen);
-                }
-              }}
-            >
-              <span
-                onClick={e => {
-                  e.stopPropagation();
-                  setIsMenuOpen(!isMenuOpen);
-                }}
-              >
+            <StyledDropdown>
+              <span>
                 <Dropdown
                   overlay={menu}
                   visible={isMenuOpen}
-                  onVisibleChange={setIsMenuOpen}
                   trigger={['click']}
                 >
                   <span

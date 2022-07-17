@@ -1,6 +1,6 @@
 {
   "name": "rplauncher",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "rPLauncher is simple, yet powerful Minecraft custom launcher with a strong focus on the user experience",
   "keywords": [
     "minecraft",
@@ -106,6 +106,7 @@
     "@fortawesome/free-regular-svg-icons": "^5.15.4",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
     "@fortawesome/react-fontawesome": "^0.1.15",
+    "@napi-rs/cli": "^2.10.0",
     "@sentry/webpack-plugin": "^1.18.3",
     "babel-core": "^6.26.3",
     "babel-loader": "^8.2.2",
@@ -153,7 +154,7 @@
     "@sentry/tracing": "^6.16.1",
     "@sentry/utils": "^6.16.1",
     "7zip-bin": "^5.1.1",
-    "antd": "4.16.11",
+    "antd": "^4.21.5",
     "axios": "^0.27.2",
     "base64-stream": "^1.0.0",
     "base64url": "^3.0.1",
