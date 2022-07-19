@@ -402,7 +402,7 @@ export const getSearch = async (
     ...(modLoaderType === 'fabric' && { modLoaderType: 'Fabric' }),
     index
   };
-  console.log(params);
+
   const { data } = await axios.get(url, { params });
   return data?.data;
 };

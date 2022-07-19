@@ -69,7 +69,7 @@ const LeftSide = styled.div`
         : 0}px
   );
   & div {
-    margin: 5px 0;
+    margin: 3px 0;
   }
   p {
     margin-top: 1em;
@@ -157,6 +157,7 @@ const Login = () => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
+  const [twofactor, setTwofactor] = useState(null);
   const [version, setVersion] = useState(null);
   const [loginFailed, setLoginFailed] = useState(false);
   const [selectedSerivce, setSelectedService] = useState('Microsoft Account');
@@ -184,11 +185,15 @@ const Login = () => {
     dispatch(requesting('accountAuthentication'));
     setTimeout(() => {
       dispatch(
-        load(features.mcAuthentication, dispatch(elyByLogin(email, password)))
+        load(
+          features.mcAuthentication,
+          dispatch(elyByLogin(email, password, twofactor))
+        )
       ).catch(e => {
         console.error(e);
         setLoginFailed(e);
         setPassword(null);
+        setTwofactor(null);
       });
     }, 1000);
   };
@@ -301,7 +306,7 @@ const Login = () => {
   const renderLoginElyByAccount = () => (
     <Container>
       <p>Sign in with your Ely.By Account</p>
-      <Form>
+      <Form onKeyDown={e => e.key === 'Enter' && authenticateElyBy()}>
         <div>
           <Input
             placeholder="Email"
@@ -321,7 +326,19 @@ const Login = () => {
             type="password"
             value={password}
             onChange={({ target: { value } }) => setPassword(value)}
-            onKeyDown={e => e.key === 'Enter' && authenticateElyBy()}
+            css={`
+              backdrop-filter: blur(16px) saturate(180%);
+              background-color: rgba(17, 25, 40, 0.75);
+              border-radius: 12px;
+              border: 1px solid rgba(255, 255, 255, 0.125);
+            `}
+          />
+        </div>
+        <div>
+          <Input
+            placeholder="2FA (just if needed)"
+            value={twofactor}
+            onChange={({ target: { value } }) => setTwofactor(value)}
             css={`
               backdrop-filter: blur(16px) saturate(180%);
               background-color: rgba(17, 25, 40, 0.75);

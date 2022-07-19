@@ -26,6 +26,7 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState(username || '');
   const [password, setPassword] = useState('');
+  const [twofactor, setTwofactor] = useState('');
   const [accountType, setAccountType] = useState(_accountType || null);
   const [loginFailed, setLoginFailed] = useState(loginmessage || '');
 
@@ -47,7 +48,7 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
     dispatch(
       load(
         features.mcAuthentication,
-        dispatch(elyByLogin(email, password, false))
+        dispatch(elyByLogin(email, password, twofactor, false))
       )
     )
       .then(() => dispatch(closeModal()))
@@ -108,7 +109,7 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
 
   const renderAddElyByAccount = () => (
     <Container>
-      <FormContainer>
+      <FormContainer onKeyDown={e => e.key === 'Enter' && addElyByAccount()}>
         <h1>{getSelectedService()}</h1>
         {loginFailed && (
           <LoginFailMessage>
@@ -126,7 +127,11 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
           placeholder="Password"
           value={password}
           onChange={e => setPassword(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && addElyByAccount()}
+        />
+        <StyledInput
+          placeholder="2FA (just if needed)"
+          value={twofactor}
+          onChange={e => setTwofactor(e.target.value)}
         />
       </FormContainer>
       <FormContainer>

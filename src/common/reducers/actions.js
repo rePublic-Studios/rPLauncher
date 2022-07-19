@@ -473,7 +473,7 @@ export function downloadJavaLegacyFixer() {
 //   };
 // }
 
-export function elyByLogin(username, password, redirect = true) {
+export function elyByLogin(username, password, twofactor, redirect = true) {
   return async (dispatch, getState) => {
     const {
       app: { isNewUser, clientToken }
@@ -484,10 +484,19 @@ export function elyByLogin(username, password, redirect = true) {
     try {
       let request = null;
       try {
-        request = await mcElyByAuthenticate(username, password, clientToken);
+        request = await mcElyByAuthenticate(
+          username,
+          password +
+            (twofactor !== null && twofactor !== '' ? `:${twofactor}` : ''),
+          clientToken
+        );
       } catch (err) {
         console.error(err);
-        throw new Error('Invalid username or password.');
+        const error = err?.response?.data?.errorMessage
+          ? err.response.data.errorMessage
+          : 'Invalid username or password.';
+
+        throw new Error(error);
       }
       const { data } = request;
       data.accountType = ACCOUNT_ELYBY;
@@ -756,7 +765,6 @@ export function loginWithAccessToken(redirect = true) {
               const skinUrl = await elyByPlayerSkinService(
                 data.selectedProfile.name
               );
-              console.log(skinUrl);
               if (skinUrl) {
                 data.skin = skinUrl;
               }
