@@ -420,7 +420,7 @@ const ModrinthModsBrowser = ({ instanceName, gameVersion }) => {
         <Select
           placeholder="Category"
           onChange={setCategoryId}
-          defaultValue={null}
+          defaultValue={0}
           virtual={false}
           css={`
             width: 500px !important;
@@ -428,7 +428,7 @@ const ModrinthModsBrowser = ({ instanceName, gameVersion }) => {
             text-transform: capitalize;
           `}
         >
-          <Select.Option key={null} value={null}>
+          <Select.Option key="allcategories" value={0}>
             All Categories
           </Select.Option>
           {(categories || [])

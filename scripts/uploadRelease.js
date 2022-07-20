@@ -5,7 +5,7 @@ const axios = require('axios');
 const fse = require('fs-extra');
 const dotenv = require('dotenv');
 
-dotenv.config();
+dotenv.config({ path: '.env.local' });
 
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
@@ -22,19 +22,12 @@ const main = async () => {
   );
 
   let uploadUrl = null;
-
   try {
     const { data: releasesList } = await axios.default.get(
-      `https://github.com/rePublic-Studios/rPLauncher/releases`,
-      {
-        headers: {
-          Authorization: `token ${process.env.GH_ACCESS_TOKEN_RELEASES}`
-        }
-      }
+      `https://api.github.com/repos/rePublic-Studios/rPLauncher/releases`
     );
 
     const lastRelease = releasesList.find(v => v.tag_name === `v${version}`);
-
     if (lastRelease) {
       uploadUrl = lastRelease.upload_url;
       console.log('Found a release with this tag. Uploading there.');
@@ -44,6 +37,14 @@ const main = async () => {
   } catch (err) {
     console.log(err);
 
+    const getChangeLog = async () => {
+      const { data: commitList } = await axios.default.get(
+        `https://api.github.com/repos/rePublic-Studios/rPLauncher/commits?per_page=1`
+      );
+      const { html_url: commitUrl, commit } = commitList[0];
+      return commit.message.replace('\n', ` [${commitUrl}]\n`);
+    };
+
     const { data: newRelease } = await axios.default.post(
       'https://api.github.com/repos/rePublic-Studios/rPLauncher/releases',
       {
@@ -51,7 +52,7 @@ const main = async () => {
         name: `v${version}`,
         draft: true,
         prerelease: version.includes('beta'),
-        body: 'new automatic release'
+        body: getChangeLog()
       },
       {
         headers: {

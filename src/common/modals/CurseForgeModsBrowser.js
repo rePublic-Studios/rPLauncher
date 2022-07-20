@@ -218,7 +218,6 @@ const ModsListWrapper = ({
                   setLoading(true);
                   e.stopPropagation();
                   const files = await getAddonFiles(item?.id);
-
                   const isFabric = getPatchedInstanceType(instance) === FABRIC;
                   const isForge = getPatchedInstanceType(instance) === FORGE;
 
@@ -266,7 +265,9 @@ const ModsListWrapper = ({
                             parseInt(p, 10) / 100
                           );
                         }
-                      }
+                      },
+                      undefined,
+                      item
                     )
                   );
                   ipcRenderer.invoke('update-progress-bar', 0);
@@ -342,7 +343,7 @@ const CurseForgeModsBrowser = ({ instanceName, gameVersions }) => {
   const [filterType, setFilterType] = useState('Featured');
   const [searchQuery, setSearchQuery] = useState('');
   const [hasNextPage, setHasNextPage] = useState(false);
-  const [categoryId, setCategoryId] = useState(null);
+  const [categoryId, setCategoryId] = useState(undefined);
   const [error, setError] = useState(false);
   const instance = useSelector(state => _getInstance(state)(instanceName));
   const categories = useSelector(state => state.app.curseforgeCategories);
@@ -434,14 +435,14 @@ const CurseForgeModsBrowser = ({ instanceName, gameVersions }) => {
         <Select
           placeholder="Minecraft Category"
           onChange={setCategoryId}
-          defaultValue={null}
+          defaultValue={0}
           virtual={false}
           css={`
             width: 500px !important;
             margin-right: 10px !important;
           `}
         >
-          <Select.Option key="allcategories" value={null}>
+          <Select.Option key="allcategories" value={0}>
             All Categories
           </Select.Option>
           {(categories || [])

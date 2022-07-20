@@ -18,7 +18,7 @@ const CurseForgeModpacks = ({ setStep, setVersion, setModpack }) => {
   const [modpacks, setModpacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [minecraftVersion, setMinecraftVersion] = useState('');
-  const [categoryId, setCategoryId] = useState(0);
+  const [categoryId, setCategoryId] = useState(undefined);
   const [sortBy, setSortBy] = useState('Featured');
   const [searchText, setSearchText] = useState('');
   const [hasNextPage, setHasNextPage] = useState(false);
