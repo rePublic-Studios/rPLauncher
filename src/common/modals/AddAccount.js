@@ -129,7 +129,7 @@ const AddAccount = ({ username, _accountType, loginmessage }) => {
           onChange={e => setPassword(e.target.value)}
         />
         <StyledInput
-          placeholder="2FA (just if needed)"
+          placeholder="2FA (optional)"
           value={twofactor}
           onChange={e => setTwofactor(e.target.value)}
         />

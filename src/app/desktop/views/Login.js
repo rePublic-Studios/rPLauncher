@@ -336,7 +336,7 @@ const Login = () => {
         </div>
         <div>
           <Input
-            placeholder="2FA (just if needed)"
+            placeholder="2FA (optional)"
             value={twofactor}
             onChange={({ target: { value } }) => setTwofactor(value)}
             css={`

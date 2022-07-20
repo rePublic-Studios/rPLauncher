@@ -8,16 +8,12 @@ import ModpacksListWrapper from './ModpacksListWrapper';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBomb, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
 import {
-  getFTBModpackData,
-  getFTBMostPlayed,
-  getFTBSearch
+  getModrinthMostPlayedModpacks,
+  getModrinthSearchResults
 } from '../../../api';
-import pMap from 'p-map';
 
-let lastRequest;
-const FTBModpacks = ({ setStep, setModpack, setVersion }) => {
+const ModrinthModpacks = ({ setStep, setModpack, setVersion }) => {
   const infiniteLoaderRef = useRef(null);
-  const [modpackIds, setModpackIds] = useState([]);
   const [modpacks, setModpacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
@@ -26,19 +22,9 @@ const FTBModpacks = ({ setStep, setModpack, setVersion }) => {
 
   useEffect(() => {
     const init = async () => {
-      let data;
-      if (searchText.length < 3) {
-        data = await getFTBMostPlayed();
-      } else {
-        data = await getFTBSearch(searchText);
-      }
-
-      setModpackIds(data.packs || []);
       updateModpacks();
     };
-    init().catch(e => {
-      setError(e);
-    });
+    init();
   }, [searchText]);
 
   const updateModpacks = useDebouncedCallback(() => {
@@ -49,39 +35,48 @@ const FTBModpacks = ({ setStep, setModpack, setVersion }) => {
   }, 250);
 
   const loadMoreModpacks = async (reset = false) => {
-    if (modpackIds.length === 0) return;
-    const reqObj = {};
-    lastRequest = reqObj;
-    if (!loading) {
-      setLoading(true);
-    }
-    if (reset && (modpacks.length !== 0 || hasNextPage)) {
+    const searchResult =
+      searchText.length < 3
+        ? await getModrinthMostPlayedModpacks()
+        : await getModrinthSearchResults(searchText, 'MODPACK');
+
+    if (!searchResult || modpacks.length == searchResult.total_hits) return;
+
+    setLoading(true);
+
+    if (reset) {
       setModpacks([]);
       setHasNextPage(false);
     }
     let data = null;
     try {
-      if (error) {
-        setError(false);
-      }
-      const idsToFetch = modpackIds.slice(
-        modpacks.length,
-        modpacks.length + 20
-      );
-      data = await pMap(idsToFetch, getFTBModpackData);
+      setError(false);
+
+      const offset = reset ? 0 : modpacks.length || 0;
+      data =
+        searchText.length < 3
+          ? await getModrinthMostPlayedModpacks(offset)
+          : await getModrinthSearchResults(
+              searchText,
+              'MODPACK',
+              null,
+              [],
+              null,
+              offset
+            );
     } catch (err) {
       setError(err);
       return;
     }
-    const newModpacks = (reset ? data : [...modpacks, ...data]).filter(
-      v => v.status !== 'error'
-    );
-    if (lastRequest === reqObj) {
-      setLoading(false);
-      setHasNextPage(newModpacks.length % 20 === 0 && newModpacks.length !== 0);
-      setModpacks(newModpacks);
-    }
+
+    const newModpacks = reset ? data.hits : [...modpacks, ...data.hits];
+
+    setHasNextPage(newModpacks.length < searchResult.total_hits);
+    setModpacks(newModpacks);
+
+    setLoading(false);
   };
+
   return (
     <Container>
       <HeaderContainer>
@@ -158,7 +153,7 @@ const FTBModpacks = ({ setStep, setModpack, setVersion }) => {
   );
 };
 
-export default React.memo(FTBModpacks);
+export default React.memo(ModrinthModpacks);
 
 const Container = styled.div`
   width: 100%;

@@ -7,7 +7,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBomb, faExclamationCircle } from '@fortawesome/free-solid-svg-icons';
-import { getSearch } from '../../../api';
+import { getCurseForgeSearch } from '../../../api';
 import ModpacksListWrapper from './ModpacksListWrapper';
 
 let lastRequest;
@@ -17,8 +17,8 @@ const CurseForgeModpacks = ({ setStep, setVersion, setModpack }) => {
   const infiniteLoaderRef = useRef(null);
   const [modpacks, setModpacks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [minecraftVersion, setMinecraftVersion] = useState(null);
-  const [categoryId, setCategoryId] = useState(null);
+  const [minecraftVersion, setMinecraftVersion] = useState('');
+  const [categoryId, setCategoryId] = useState(0);
   const [sortBy, setSortBy] = useState('Featured');
   const [searchText, setSearchText] = useState('');
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -46,7 +46,7 @@ const CurseForgeModpacks = ({ setStep, setVersion, setModpack }) => {
       if (error) {
         setError(false);
       }
-      data = await getSearch(
+      data = await getCurseForgeSearch(
         'modpacks',
         searchText,
         40,
@@ -78,10 +78,10 @@ const CurseForgeModpacks = ({ setStep, setVersion, setModpack }) => {
         <StyledSelect
           placeholder="Minecraft Version"
           onChange={setMinecraftVersion}
-          defaultValue={null}
+          defaultValue=""
           virtual={false}
         >
-          <Select.Option value={null}>All Versions</Select.Option>
+          <Select.Option value="">All Versions</Select.Option>
           {(mcVersions || [])
             .filter(v => v?.type === 'release')
             .map(v => (
@@ -93,10 +93,10 @@ const CurseForgeModpacks = ({ setStep, setVersion, setModpack }) => {
         <StyledSelect
           placeholder="Minecraft Category"
           onChange={setCategoryId}
-          defaultValue={null}
+          defaultValue={0}
           virtual={false}
         >
-          <Select.Option key="allcategories" value={null}>
+          <Select.Option key="allcategories" value={0}>
             All Categories
           </Select.Option>
           {(categories || [])

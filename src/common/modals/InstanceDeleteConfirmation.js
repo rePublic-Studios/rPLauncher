@@ -53,7 +53,7 @@ const InstanceDeleteConfirmation = ({ instanceName }) => {
         data you have in this instance
         <div
           css={`
-            margin-top: 50px;
+            margin-top: 30px;
             display: flex;
             width: 100%;
             justify-content: space-between;

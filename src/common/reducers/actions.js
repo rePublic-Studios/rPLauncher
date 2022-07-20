@@ -45,11 +45,12 @@ import {
   MC_STARTUP_METHODS,
   MICROSOFT_OAUTH_CLIENT_ID,
   MICROSOFT_OAUTH_REDIRECT_URL,
+  MODRINTH,
   NEWS_URL
 } from '../utils/constants';
 import {
   getAddon,
-  getAddonCategories,
+  getCurseForgeCategories,
   getAddonFile,
   getAddonFiles,
   getAddonsByFingerprint,
@@ -61,6 +62,8 @@ import {
   getJavaLatestManifest,
   getJavaManifest,
   getMcManifest,
+  getModrinthVersionManifest,
+  getModrinthCategories,
   getMultipleAddons,
   // mcAuthenticate,
   // mcRefresh,
@@ -76,6 +79,8 @@ import {
   msExchangeCodeForAccessToken,
   msMinecraftProfile,
   msOAuthRefresh,
+  getModrinthVersions,
+  getVersionsFromHashes,
   mojangApiProfilesUrl
 } from '../api';
 import {
@@ -122,13 +127,16 @@ import {
 import ga from '../utils/analytics';
 import {
   downloadFile,
-  downloadInstanceFiles
+  downloadInstanceFiles,
+  downloadInstanceFilesWithFallbacks
 } from '../../app/desktop/utils/downloader';
 import {
+  addQuotes,
   getFileMurmurHash2,
   getSize,
   makeInstanceRestorePoint,
-  removeDuplicates
+  removeDuplicates,
+  replaceLibraryDirectory
 } from '../utils';
 import { UPDATE_CONCURRENT_DOWNLOADS } from './settings/actionTypes';
 import { UPDATE_MODAL } from './modals/actionTypes';
@@ -176,13 +184,23 @@ export function initManifests() {
       });
       return java;
     };
-    const getAddonCategoriesVersions = async () => {
-      const curseforgeCategories = await getAddonCategories();
+    const getCurseForgeCategoriesVersions = async () => {
+      const curseforgeCategories = await getCurseForgeCategories();
       dispatch({
         type: ActionTypes.UPDATE_CURSEFORGE_CATEGORIES_MANIFEST,
         data: curseforgeCategories
       });
       return curseforgeCategories;
+    };
+    const getModrinthCategoriesList = async () => {
+      const categories = await getModrinthCategories();
+
+      dispatch({
+        type: ActionTypes.UPDATE_MODRINTH_CATEGORIES,
+        data: categories
+      });
+
+      return categories;
     };
     const getCurseForgeVersionIds = async () => {
       const versionIds = await getCFVersionIds();
@@ -221,18 +239,39 @@ export function initManifests() {
       return omitBy(forgeVersions, v => v.length === 0);
     };
     // Using reflect to avoid rejection
-    const [fabric, java, javaLatest, categories, forge, CFVersionIds] =
-      await Promise.all([
-        reflect(getFabricVersions()),
-        reflect(getJavaManifestVersions()),
-        reflect(getJavaLatestManifestVersions()),
-        reflect(getAddonCategoriesVersions()),
-        reflect(getForgeVersions()),
-        reflect(getCurseForgeVersionIds())
-      ]);
+    const [
+      fabric,
+      java,
+      javaLatest,
+      curseForgeCategories,
+      modrinthCategories,
+      forge,
+      CFVersionIds
+    ] = await Promise.all([
+      reflect(getFabricVersions()),
+      reflect(getJavaManifestVersions()),
+      reflect(getJavaLatestManifestVersions()),
+      reflect(getCurseForgeCategoriesVersions()),
+      reflect(getModrinthCategoriesList()),
+      reflect(getForgeVersions()),
+      reflect(getCurseForgeVersionIds())
+    ]);
 
-    if (fabric.e || java.e || categories.e || forge.e || CFVersionIds.e) {
-      console.error(fabric, java, categories, forge);
+    if (
+      fabric.e ||
+      java.e ||
+      curseForgeCategories.e ||
+      modrinthCategories.e ||
+      forge.e ||
+      CFVersionIds.e
+    ) {
+      console.error(
+        fabric,
+        java,
+        curseForgeCategories,
+        modrinthCategories.e,
+        forge
+      );
     }
 
     return {
@@ -240,7 +279,12 @@ export function initManifests() {
       fabric: fabric.status ? fabric.v : app.fabricManifest,
       java: java.status ? java.v : app.javaManifest,
       javaLatest: javaLatest.status ? javaLatest.v : app.javaLatestManifest,
-      categories: categories.status ? categories.v : app.curseforgeCategories,
+      curseForgeCategories: curseForgeCategories.status
+        ? curseForgeCategories.v
+        : app.curseforgeCategories,
+      modrinthCategories: modrinthCategories.status
+        ? modrinthCategories.v
+        : app.modrinthCategories,
       forge: forge.status ? forge.v : app.forgeManifest,
       curseforgeVersionIds: CFVersionIds.status
         ? CFVersionIds.v
@@ -1945,7 +1989,16 @@ export function processForgeManifest(instanceName) {
 
           if (!fileExists) {
             if (!modManifest.downloadUrl) {
-              optedOutMods.push({ addon, modManifest });
+              const normalizedModData = normalizeModData(
+                modManifest,
+                item.projectID,
+                addon.name
+              );
+
+              optedOutMods.push({
+                addon,
+                modManifest: normalizedModData
+              });
               return;
             }
             await downloadFile(destFile, modManifest.downloadUrl);
@@ -2100,6 +2153,85 @@ export function processForgeManifest(instanceName) {
         );
       });
     }
+
+    await fse.remove(path.join(_getTempPath(state), instanceName));
+  };
+}
+
+export function processModrinthManifest(instanceName) {
+  return async (dispatch, getState) => {
+    const state = getState();
+    /** @type {{manifest: ModrinthManifest}} */
+    const { manifest } = _getCurrentDownloadItem(state);
+    const { files } = manifest;
+
+    const instancesPath = _getInstancesPath(state);
+    const instancePath = path.join(instancesPath, instanceName);
+
+    const concurrency = state.settings.concurrentDownloads;
+
+    let prev = 0;
+    const updatePercentage = downloaded => {
+      const percentage = (downloaded * 100) / files.length;
+      const progress = parseInt(percentage, 10);
+      if (progress !== prev) {
+        prev = progress;
+        dispatch(updateDownloadProgress(progress));
+      }
+    };
+
+    dispatch(updateDownloadStatus(instanceName, 'Downloading pack...'));
+    await downloadInstanceFilesWithFallbacks(
+      files,
+      instancePath,
+      updatePercentage,
+      state.settings.concurrentDownloads
+    );
+
+    dispatch(updateDownloadStatus(instanceName, 'Finalizing files...'));
+
+    const hashVersionMap = await getVersionsFromHashes(
+      files.map(file => file.hashes.sha512),
+      'sha512'
+    );
+
+    let modManifests = [];
+    await pMap(
+      files,
+      async file => {
+        /** @type {ModrinthVersion} */
+        const version = hashVersionMap[file.hashes.sha512];
+
+        // TODO: Remember which file was actually downloaded and put it here instead of just using the first one
+        const fileName = path.basename(file.path);
+        modManifests = [
+          ...modManifests,
+          {
+            projectID: version?.project_id ?? null,
+            fileID: version?.id ?? null,
+            fileName,
+            displayName: fileName,
+            version: version?.version_number ?? null,
+            downloadUrl: file.downloads.at(0),
+            modSource: MODRINTH
+          }
+        ];
+
+        const percentage = (modManifests.length * 100) / files.length;
+
+        dispatch(updateDownloadProgress(percentage > 0 ? percentage : 0));
+      },
+      { concurrency }
+    );
+
+    await dispatch(
+      updateInstanceConfig(instanceName, config => {
+        return {
+          ...config,
+          mods: [...(config.mods || []), ...modManifests]
+        };
+      })
+    );
 
     await fse.remove(path.join(_getTempPath(state), instanceName));
   };
@@ -2275,18 +2407,33 @@ export function downloadInstance(instanceName) {
       if (mcJson.assets === 'legacy') {
         await copyAssetsToLegacy(assets);
       }
+
       if (loader?.loaderType === FABRIC) {
         await dispatch(downloadFabric(instanceName));
       } else if (loader?.loaderType === FORGE) {
         await dispatch(downloadForge(instanceName));
       }
 
-      // analyze source and do it for ftb and forge
-
-      if (manifest && loader?.source === FTB)
-        await dispatch(processFTBManifest(instanceName));
-      else if (manifest && loader?.source === CURSEFORGE)
-        await dispatch(processForgeManifest(instanceName));
+      // analyze source and do it for ftb, curseforge, and modrinth
+      if (manifest) {
+        switch (loader?.source) {
+          case FTB: {
+            await dispatch(processFTBManifest(instanceName));
+            break;
+          }
+          case CURSEFORGE: {
+            await dispatch(processForgeManifest(instanceName));
+            break;
+          }
+          case MODRINTH: {
+            await dispatch(processModrinthManifest(instanceName));
+            break;
+          }
+          default: {
+            console.error(`Unknown modpack source: ${loader?.source}`);
+          }
+        }
+      }
 
       // Adding global settings
       await addGlobalSettings(
@@ -2325,149 +2472,215 @@ export const changeModpackVersion = (instanceName, newModpackData) => {
     const tempPath = _getTempPath(state);
     const instancePath = path.join(_getInstancesPath(state), instanceName);
 
-    if (instance.loader.source === CURSEFORGE) {
-      const addon = await getAddon(instance.loader?.projectID);
+    switch (instance.loader.source) {
+      case CURSEFORGE: {
+        const addon = await getAddon(instance.loader?.projectID);
+        const manifest = await fse.readJson(
+          path.join(instancePath, 'manifest.json')
+        );
 
-      const manifest = await fse.readJson(
-        path.join(instancePath, 'manifest.json')
-      );
+        await fse.remove(path.join(instancePath, 'manifest.json'));
 
-      await fse.remove(path.join(instancePath, 'manifest.json'));
-
-      // Delete prev overrides
-      await Promise.all(
-        (instance?.overrides || []).map(async v => {
-          try {
-            await fs.stat(path.join(instancePath, v));
-            await fse.remove(path.join(instancePath, v));
-          } catch {
-            // Swallow error
-          }
-        })
-      );
-
-      const modsprojectIds = (manifest?.files || []).map(v => v?.projectID);
-
-      dispatch(
-        updateInstanceConfig(instanceName, prev =>
-          omit(
-            {
-              ...prev,
-              mods: prev.mods.filter(
-                v => !modsprojectIds.includes(v?.projectID)
-              )
-            },
-            ['overrides']
-          )
-        )
-      );
-
-      await Promise.all(
-        modsprojectIds.map(async projectID => {
-          const modFound = instance.mods?.find(v => v?.projectID === projectID);
-          if (modFound?.fileName) {
+        // Delete prev overrides
+        await Promise.all(
+          (instance?.overrides || []).map(async v => {
             try {
-              await fs.stat(
-                path.join(instancePath, 'mods', modFound?.fileName)
-              );
-              await fse.remove(
-                path.join(instancePath, 'mods', modFound?.fileName)
-              );
+              await fs.stat(path.join(instancePath, v));
+              await fse.remove(path.join(instancePath, v));
             } catch {
               // Swallow error
             }
-          }
-        })
-      );
-
-      const imageURL = addon?.logo?.thumbnailUrl;
-
-      const newManifest = await downloadAddonZip(
-        instance.loader?.projectID,
-        newModpackData.id,
-        path.join(_getInstancesPath(state), instanceName),
-        path.join(tempPath, instanceName)
-      );
-
-      await downloadFile(
-        path.join(
-          _getInstancesPath(state),
-          instanceName,
-          `background${path.extname(imageURL)}`
-        ),
-        imageURL
-      );
-
-      let loaderVersion;
-      if (instance.loader?.loaderType === FABRIC) {
-        loaderVersion = extractFabricVersionFromManifest(newManifest);
-      } else {
-        loaderVersion = convertcurseForgeToCanonical(
-          newManifest.minecraft.modLoaders.find(v => v.primary).id,
-          newManifest.minecraft.version,
-          state.app.forgeManifest
+          })
         );
+
+        const modsprojectIds = (manifest?.files || []).map(v => v?.projectID);
+
+        dispatch(
+          updateInstanceConfig(instanceName, prev =>
+            omit(
+              {
+                ...prev,
+                mods: prev.mods.filter(
+                  v => !modsprojectIds.includes(v?.projectID)
+                )
+              },
+              ['overrides']
+            )
+          )
+        );
+
+        await Promise.all(
+          modsprojectIds.map(async projectID => {
+            const modFound = instance.mods?.find(
+              v => v?.projectID === projectID
+            );
+            if (modFound?.fileName) {
+              try {
+                await fs.stat(
+                  path.join(instancePath, 'mods', modFound?.fileName)
+                );
+                await fse.remove(
+                  path.join(instancePath, 'mods', modFound?.fileName)
+                );
+              } catch {
+                // Swallow error
+              }
+            }
+          })
+        );
+
+        const imageURL = addon?.logo?.thumbnailUrl;
+
+        const newManifest = await downloadAddonZip(
+          instance.loader?.projectID,
+          newModpackData.id,
+          path.join(_getInstancesPath(state), instanceName),
+          path.join(tempPath, instanceName)
+        );
+
+        await downloadFile(
+          path.join(
+            _getInstancesPath(state),
+            instanceName,
+            `background${path.extname(imageURL)}`
+          ),
+          imageURL
+        );
+
+        let loaderVersion;
+        if (instance.loader?.loaderType === FABRIC) {
+          loaderVersion = extractFabricVersionFromManifest(newManifest);
+        } else {
+          loaderVersion = convertcurseForgeToCanonical(
+            newManifest.minecraft.modLoaders.find(v => v.primary).id,
+            newManifest.minecraft.version,
+            state.app.forgeManifest
+          );
+        }
+
+        const loader = {
+          loaderType: instance.loader?.loaderType,
+          mcVersion: newManifest.minecraft.version,
+          loaderVersion,
+          fileID: instance.loader?.fileID,
+          projectID: instance.loader?.projectID,
+          source: instance.loader?.source
+        };
+
+        dispatch(
+          addToQueue(
+            instanceName,
+            loader,
+            newManifest,
+            `background${path.extname(imageURL)}`,
+            undefined,
+            undefined,
+            { isUpdate: true, bypassCopy: true }
+          )
+        );
+        break;
       }
+      case FTB: {
+        const imageURL = newModpackData.imageUrl;
 
-      const loader = {
-        loaderType: instance.loader?.loaderType,
-        mcVersion: newManifest.minecraft.version,
-        loaderVersion,
-        fileID: instance.loader?.fileID,
-        projectID: instance.loader?.projectID,
-        source: instance.loader?.source
-      };
+        await downloadFile(
+          path.join(
+            _getInstancesPath(state),
+            instanceName,
+            `background${path.extname(imageURL)}`
+          ),
+          imageURL
+        );
 
-      dispatch(
-        addToQueue(
-          instanceName,
-          loader,
-          newManifest,
-          `background${path.extname(imageURL)}`,
-          undefined,
-          undefined,
-          { isUpdate: true, bypassCopy: true }
-        )
-      );
-    } else if (instance.loader.source === FTB) {
-      const imageURL = newModpackData.imageUrl;
+        const newModpack = await getFTBModpackVersionData(
+          instance.loader?.projectID,
+          newModpackData.id
+        );
 
-      await downloadFile(
-        path.join(
-          _getInstancesPath(state),
-          instanceName,
-          `background${path.extname(imageURL)}`
-        ),
-        imageURL
-      );
+        const loader = {
+          loaderType: instance.loader?.loaderType,
 
-      const newModpack = await getFTBModpackVersionData(
-        instance.loader?.projectID,
-        newModpackData.id
-      );
+          mcVersion: newModpack.targets[1].version,
+          loaderVersion: convertcurseForgeToCanonical(
+            `forge-${newModpack.targets[0].version}`,
+            newModpack.targets[1].version,
+            state.app.forgeManifest
+          ),
+          fileID: newModpack?.id,
+          projectID: instance.loader?.projectID,
+          source: instance.loader?.source
+        };
 
-      const loader = {
-        loaderType: instance.loader?.loaderType,
+        dispatch(
+          addToQueue(
+            instanceName,
+            loader,
+            null,
+            `background${path.extname(imageURL)}`
+          )
+        );
 
-        mcVersion: newModpack.targets[1].version,
-        loaderVersion: convertcurseForgeToCanonical(
-          `forge-${newModpack.targets[0].version}`,
-          newModpack.targets[1].version,
-          state.app.forgeManifest
-        ),
-        fileID: newModpack?.id,
-        projectID: instance.loader?.projectID,
-        source: instance.loader?.source
-      };
+        break;
+      }
+      case MODRINTH: {
+        const manifest = await getModrinthVersionManifest(
+          newModpackData?.id,
+          path.join(_getInstancesPath(state), instanceName)
+        );
+        const imageURL = newModpackData.imageUrl;
+        const loaderType = instance.loader?.loaderType;
+        let loaderDependencyName;
+        switch (loaderType) {
+          case FORGE: {
+            loaderDependencyName = 'forge';
+            break;
+          }
+          case FABRIC: {
+            loaderDependencyName = 'fabric-loader';
+            break;
+          }
+          // case QUILT: {
+          //   loaderDependencyName = 'quilt-loader';
+          //   break;
+          // }
+          default:
+            throw Error(
+              `This instance (${instanceName}) requires an unsupported loader: ${loaderType}`
+            );
+        }
 
-      dispatch(
-        addToQueue(
-          instanceName,
-          loader,
-          null,
-          `background${path.extname(imageURL)}`
-        )
-      );
+        const loader = {
+          loaderType,
+          mcVersion: newModpackData?.gameVersions.at(0),
+          loaderVersion: manifest.dependencies[loaderDependencyName],
+          fileID: newModpackData?.id,
+          projectID: instance.loader?.projectID,
+          source: instance.loader?.source
+        };
+
+        await downloadFile(
+          path.join(
+            _getInstancesPath(state),
+            instanceName,
+            `background${path.extname(imageURL)}`
+          ),
+          imageURL
+        );
+
+        dispatch(
+          addToQueue(
+            instanceName,
+            loader,
+            manifest,
+            `background${path.extname(imageURL)}`
+          )
+        );
+
+        break;
+      }
+      default: {
+        console.error(`Unknown modpack source: ${instance.loader.source}`);
+      }
     }
   };
 };
@@ -2939,6 +3152,7 @@ export function launchInstance(instanceName, forceQuit = false) {
     const { userData } = state;
     const account = _getCurrentAccount(state);
     const librariesPath = _getLibrariesPath(state);
+    const exeData = await ipcRenderer.invoke('getExecutablePath');
     const assetsPath = _getAssetsPath(state);
     const { memory, args } = state.settings.java;
     const { resolution: globalMinecraftResolution } =
@@ -3155,20 +3369,18 @@ export function launchInstance(instanceName, forceQuit = false) {
             mcJson.forge = { arguments: {} };
             mcJson.forge.arguments.jvm = forgeJson.version.arguments.jvm.map(
               arg => {
-                return arg
-                  .replace(/\${version_name}/g, mcJson.id)
-                  .replace(
-                    /=\${library_directory}/g,
-                    `="${_getLibrariesPath(state)}"`
-                  )
-                  .replace(
-                    /\${library_directory}/g,
-                    `${_getLibrariesPath(state)}`
-                  )
-                  .replace(
-                    /\${classpath_separator}/g,
-                    process.platform === 'win32' ? ';' : ':'
-                  );
+                return replaceLibraryDirectory(
+                  arg
+                    .replace(/\${version_name}/g, mcJson.id)
+                    .replace(
+                      /=\${library_directory}/g,
+                      `="${_getLibrariesPath(state)}"`
+                    ),
+                  _getLibrariesPath(state)
+                ).replace(
+                  /\${classpath_separator}/g,
+                  process.platform === 'win32' ? '";' : '":'
+                );
               }
             );
           }
@@ -3229,7 +3441,11 @@ export function launchInstance(instanceName, forceQuit = false) {
         ? getJVMArguments113
         : getJVMArguments112;
 
-    const javaArguments = (javaArgs !== undefined ? javaArgs : args).split(' ');
+    const javaArguments = `${
+      account.accountType === ACCOUNT_ELYBY
+        ? `-javaagent:${exeData}\\authlib-injector.jar=ely.by`
+        : ``
+    } ${javaArgs !== undefined ? javaArgs : args}`.split(' ');
     const javaMem = javaMemory !== undefined ? javaMemory : memory;
     const gameResolution = instanceResolution || globalMinecraftResolution;
 
@@ -3249,7 +3465,7 @@ export function launchInstance(instanceName, forceQuit = false) {
     const { mcStartupMethod } = state.settings;
     let replaceWith = `..${path.sep}..`;
 
-    const symLinkDirPath = path.join(userData.split('\\')[0], '_gdl');
+    const symLinkDirPath = path.join(userData.split('\\')[0], '_rpl');
     if (MC_STARTUP_METHODS[mcStartupMethod] === MC_STARTUP_METHODS.SYMLINK) {
       replaceWith = symLinkDirPath;
       if (process.platform === 'win32') await symlink(userData, symLinkDirPath);
@@ -3271,8 +3487,9 @@ export function launchInstance(instanceName, forceQuit = false) {
       loggingId || ''
     );
 
+    const needsQuote = process.platform !== 'win32';
     console.log(
-      `"${javaPath}" ${getJvmArguments(
+      `${addQuotes(needsQuote, javaPath)} ${getJvmArguments(
         libraries,
         mcMainFile,
         instancePath,
@@ -3288,7 +3505,7 @@ export function launchInstance(instanceName, forceQuit = false) {
         .replace(
           // eslint-disable-next-line no-template-curly-in-string
           '-Dlog4j.configurationFile=${path}',
-          `-Dlog4j.configurationFile="${loggingPath}"`
+          `-Dlog4j.configurationFile=${addQuotes(needsQuote, loggingPath)}`
         )
     );
 
@@ -3299,7 +3516,7 @@ export function launchInstance(instanceName, forceQuit = false) {
     let closed = false;
 
     const ps = spawn(
-      `"${javaPath}"`,
+      `${addQuotes(needsQuote, javaPath)}`,
       jvmArguments.map(v =>
         v
           .toString()
@@ -3307,12 +3524,12 @@ export function launchInstance(instanceName, forceQuit = false) {
           .replace(
             // eslint-disable-next-line no-template-curly-in-string
             '-Dlog4j.configurationFile=${path}',
-            `-Dlog4j.configurationFile="${loggingPath}"`
+            `-Dlog4j.configurationFile=${addQuotes(needsQuote, loggingPath)}`
           )
       ),
       {
         cwd: instancePath,
-        shell: true
+        shell: process.platform !== 'win32'
       }
     );
 
@@ -3581,6 +3798,96 @@ export function installMod(
   };
 }
 
+/**
+ * @param {ModrinthVersion} version
+ * @param {string} instanceName
+ * @param {Function} onProgress
+ */
+export function installModrinthMod(version, instanceName, onProgress) {
+  return async (dispatch, getState) => {
+    const state = getState();
+    const instancesPath = _getInstancesPath(state);
+    const instancePath = path.join(instancesPath, instanceName);
+
+    // Get mods that are already installed so we can skip them
+    let existingMods = [];
+    await dispatch(
+      updateInstanceConfig(instanceName, config => {
+        existingMods = config.mods;
+        return config;
+      })
+    );
+
+    const dependencies = (await resolveModrinthDependencies(version)).filter(
+      dep => existingMods.find(mod => mod.fileID === dep.id) === undefined
+    );
+
+    // install dependencies and the mod that we want
+    await pMap(
+      [...dependencies, version],
+      async v => {
+        const primaryFile = v.files.find(f => f.primary);
+
+        const destFile = path.join(instancePath, 'mods', primaryFile.filename);
+        const tempFile = path.join(_getTempPath(state), primaryFile.filename);
+
+        // download the mod
+        await downloadFile(tempFile, primaryFile.url, onProgress);
+
+        // add mod to the mods list in the instance's config file
+        await dispatch(
+          updateInstanceConfig(instanceName, config => {
+            return {
+              ...config,
+              mods: [
+                ...config.mods,
+                ...[
+                  {
+                    source: MODRINTH,
+                    projectID: v.project_id,
+                    fileID: v.id,
+                    fileName: primaryFile.filename,
+                    displayName: primaryFile.filename,
+                    downloadUrl: primaryFile.url
+                  }
+                ]
+              ]
+            };
+          })
+        );
+
+        await fse.move(tempFile, destFile, { overwrite: true });
+      },
+      { concurrency: 2 }
+    );
+  };
+}
+
+/**
+ * Recursively gets all the dependent versions of a given version and returns them in one array
+ * @param {ModrinthVersion} version
+ * @returns {Promise<ModrinthVersion[]>}
+ */
+async function resolveModrinthDependencies(version) {
+  // TODO: Ideally this function should be aware of mods the user already has installed and ignore them
+
+  // Get the IDs for this version's required dependencies
+  const depVersionIDs = version.dependencies
+    .filter(v => v.dependency_type === 'required')
+    .map(v => v.version_id);
+
+  // If this version does not depend on anything, return nothing
+  if (depVersionIDs.length === 0) return [];
+
+  // If we do have dependencies, get the version objects for each of those and recurse on those
+  const depVersions = await getModrinthVersions(depVersionIDs);
+  const subDepVersions = await pMap(depVersions, async v =>
+    resolveModrinthDependencies(v)
+  );
+
+  return [...depVersions, ...subDepVersions];
+}
+
 export const deleteMod = (instanceName, mod) => {
   return async (dispatch, getState) => {
     const instancesPath = _getInstancesPath(getState());
@@ -3674,7 +3981,7 @@ export const initLatestMods = instanceName => {
 
 export const isNewVersionAvailable = async () => {
   const { data: latestReleases } = await axios.get(
-    'https://api.github.com/repos/gorilla-devs/GDLauncher/releases?per_page=10'
+    'https://api.github.com/repos/rePublic-Studios/rPLauncher/releases?per_page=10'
   );
 
   const latestPrerelease = latestReleases.find(v => v.prerelease);
@@ -3686,7 +3993,7 @@ export const isNewVersionAvailable = async () => {
 
   try {
     const rChannel = await fs.readFile(
-      path.join(appData, 'gdlauncher_next', 'rChannel')
+      path.join(appData, 'rplauncher_next', 'rChannel')
     );
     releaseChannel = parseInt(rChannel.toString(), 10);
   } catch {
@@ -3730,7 +4037,7 @@ export const checkForPortableUpdates = () => {
 
     // Latest version has a value only if the user is not using the latest
     if (newVersion) {
-      const baseAssetUrl = `https://github.com/gorilla-devs/GDLauncher/releases/download/${newVersion?.tag_name}`;
+      const baseAssetUrl = `https://github.com/rePublic-Studios/rPLauncher/releases/download/${newVersion?.tag_name}`;
       const { data: latestManifest } = await axios.get(
         `${baseAssetUrl}/${process.platform}_latest.json`
       );
