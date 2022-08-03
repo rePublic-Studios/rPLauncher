@@ -26,6 +26,14 @@ import { downloadFile } from '../app/desktop/utils/downloader';
 // eslint-disable-next-line import/no-cycle
 import { extractAll } from '../app/desktop/utils';
 
+const axioInstance = axios.create({
+  headers: {
+    'X-API-KEY': '$2a$10$5BgCleD8.rLQ5Ix17Xm2lOjgfoeTJV26a1BXmmpwrOemgI517.nuC',
+    'Content-Type': 'application/json',
+    Accept: 'application/json'
+  }
+});
+
 const modrinthClient = axios.create({
   baseURL: MODRINTH_API_URL,
   headers: {
@@ -35,6 +43,10 @@ const modrinthClient = axios.create({
 
 const trackFTBAPI = () => {
   ga.sendCustomEvent('FTBAPICall');
+};
+
+const trackCurseForgeAPI = () => {
+  ga.sendCustomEvent('CurseForgeAPICall');
 };
 
 const trackModrinthAPI = () => {
@@ -301,14 +313,16 @@ export const getFabricJson = ({ mcVersion, loaderVersion }) => {
 // FORGE ADDONS
 
 export const getAddon = async projectID => {
+  trackCurseForgeAPI();
   const url = `${FORGESVC_URL}/mods/${projectID}`;
-  const { data } = await axios.get(url);
+  const { data } = await axioInstance.get(url);
   return data?.data;
 };
 
 export const getMultipleAddons = async addons => {
+  trackCurseForgeAPI();
   const url = `${FORGESVC_URL}/mods`;
-  const { data } = await axios.post(
+  const { data } = await axioInstance.post(
     url,
     JSON.stringify({
       modIds: addons
@@ -318,13 +332,14 @@ export const getMultipleAddons = async addons => {
 };
 
 export const getAddonFiles = async projectID => {
+  trackCurseForgeAPI();
   // Aggregate results in case of multiple pages
   const results = [];
   let hasMore = true;
 
   while (hasMore) {
     const url = `${FORGESVC_URL}/mods/${projectID}/files?pageSize=400&index=${results.length}`;
-    const { data } = await axios.get(url);
+    const { data } = await axioInstance.get(url);
     results.push(...(data.data || []));
 
     hasMore = data.pagination.totalCount > results.length;
@@ -334,40 +349,46 @@ export const getAddonFiles = async projectID => {
 };
 
 export const getAddonDescription = async projectID => {
+  trackCurseForgeAPI();
   const url = `${FORGESVC_URL}/mods/${projectID}/description`;
-  const { data } = await axios.get(url);
+  const { data } = await axioInstance.get(url);
   return data?.data;
 };
 
 export const getAddonFile = async (projectID, fileID) => {
+  trackCurseForgeAPI();
   const url = `${FORGESVC_URL}/mods/${projectID}/files/${fileID}`;
-  const { data } = await axios.get(url);
+  const { data } = await axioInstance.get(url);
   return data?.data;
 };
 
 export const getAddonsByFingerprint = async fingerprints => {
+  trackCurseForgeAPI();
   const url = `${FORGESVC_URL}/fingerprints`;
-  const { data } = await axios.post(url, { fingerprints });
+  const { data } = await axioInstance.post(url, { fingerprints });
 
   return data?.data;
 };
 
 export const getAddonFileChangelog = async (projectID, fileID) => {
+  trackCurseForgeAPI();
   const url = `${FORGESVC_URL}/mods/${projectID}/files/${fileID}/changelog`;
-  const { data } = await axios.get(url);
+  const { data } = await axioInstance.get(url);
 
   return data?.data;
 };
 
 export const getCurseForgeCategories = async () => {
+  trackCurseForgeAPI();
   const url = `${FORGESVC_URL}/categories?gameId=432`;
-  const { data } = await axios.get(url);
+  const { data } = await axioInstance.get(url);
   return data.data;
 };
 
 export const getCFVersionIds = async () => {
+  trackCurseForgeAPI();
   const url = `${FORGESVC_URL}/games/432/versions`;
-  const { data } = await axios.get(url);
+  const { data } = await axioInstance.get(url);
   return data.data;
 };
 
@@ -382,6 +403,7 @@ export const getCurseForgeSearch = async (
   categoryId,
   modLoaderType
 ) => {
+  trackCurseForgeAPI();
   const url = `${FORGESVC_URL}/mods/search`;
 
   // Map sort to sortField
@@ -409,19 +431,19 @@ export const getCurseForgeSearch = async (
   }
 
   const params = {
-    categoryId: categoryId || 0,
-    classId: type === 'mods' ? 6 : 4471,
     gameId: 432,
-    gameVersion: gameVersion || '',
+    categoryId: categoryId || 0,
     pageSize,
-    searchFilter,
+    index,
     sortField,
     sortOrder: isSortDescending ? 'desc' : 'asc',
+    gameVersion: gameVersion || '',
     ...(modLoaderType === 'fabric' && { modLoaderType: 'Fabric' }),
-    index
+    classId: type === 'mods' ? 6 : 4471,
+    searchFilter
   };
 
-  const { data } = await axios.get(url, { params });
+  const { data } = await axioInstance.get(url, { params });
   return data?.data;
 };
 
@@ -460,16 +482,15 @@ export const getFTBChangelog = async (modpackId, versionId) => {
 export const getFTBMostPlayed = async () => {
   trackFTBAPI();
   const url = `${FTB_API_URL}/modpack/popular/plays/1000`;
-  const { data } = await axios.get(url);
-  return data;
+  return axios.get(url);
 };
 
 export const getFTBSearch = async searchText => {
   trackFTBAPI();
   const url = `${FTB_API_URL}/modpack/search/1000?term=${searchText}`;
-  const { data } = axios.get(url);
-  return data;
+  return axios.get(url);
 };
+
 /**
  * @param {number} offset
  * @returns {Promise<ModrinthSearchResult[]>}

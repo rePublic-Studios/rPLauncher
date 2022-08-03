@@ -81,7 +81,11 @@ module.exports = () => {
         // if (process.env.SOURCE_MAPS_UPLOAD) {
         //   webpackConfig.plugins.push(
         //     new SentryCliPlugin({
-        //       include: ['./build'],
+        //       include: [
+        //         './build/electron.js',
+        //         './build/electron.js.map',
+        //         './build/static/js/*'
+        //       ],
         //       ignore: ['native'],
         //       org: 'rplauncher',
         //       project: 'react',
@@ -94,6 +98,7 @@ module.exports = () => {
         // } else {
         //   console.log('Not a release. Skipping source maps upload.');
         // }
+
         webpackConfig.resolve.aliasFields = [];
         webpackConfig.resolve.mainFields = ['module', 'main'];
         webpackConfig.resolve.alias = {

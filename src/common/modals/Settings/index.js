@@ -138,9 +138,11 @@ const pagesInstanceSetting = {
 
 const pages = {
   General: {
+    name: 'General',
     component: AsyncComponent(lazy(() => import('./components/General')))
   },
   Java: {
+    name: 'Java',
     component: AsyncComponent(lazy(() => import('./components/Java')))
   },
   GameSetting: {

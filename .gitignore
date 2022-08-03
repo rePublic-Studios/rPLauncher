@@ -14,6 +14,16 @@
 /build
 /release
 /deploy
+/public/native/*/index.d.ts
+/public/native/*/napi.node
+
+# rust target
+/target
+/napi/target
+/**/*/napi.node
+/napi/napi.node
+/napi/node_modules
+/napi/index.d.ts
 
 # IDEs
 .idea
@@ -27,6 +37,7 @@
 .env.development.local
 .env.test.local
 .env.production.local
+.env
 
 npm-debug.log*
 yarn-debug.log*

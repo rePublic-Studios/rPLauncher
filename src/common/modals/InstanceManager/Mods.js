@@ -114,6 +114,7 @@ const RowContainerBackground = styled.div`
   position: absolute;
   left: 0;
   z-index: -1;
+
   ${props =>
     props.selected &&
     ` background: repeating-linear-gradient(
@@ -123,6 +124,7 @@ const RowContainerBackground = styled.div`
   ${props.theme.palette.primary.dark} 10px,
   ${props.theme.palette.primary.dark} 20px
   );`};
+
   ${props =>
     props.disabled &&
     !props.selected &&
@@ -194,6 +196,7 @@ export const keyFrameMoveUpDown = keyframes`
   50% {
     transform: translateY(-15px);
   }
+
 `;
 
 const OpenFolderButton = styled(FontAwesomeIcon)`
@@ -213,14 +216,18 @@ const OpenFolderButton = styled(FontAwesomeIcon)`
 const DragArrow = styled(FontAwesomeIcon)`
   ${props =>
     props.fileDrag ? props.theme.palette.primary.main : 'transparent'};
+
   color: ${props => props.theme.palette.primary.main};
+
   animation: ${keyFrameMoveUpDown} 1.5s linear infinite;
 `;
 
 const CopyTitle = styled.h1`
   ${props =>
     props.fileDrag ? props.theme.palette.primary.main : 'transparent'};
+
   color: ${props => props.theme.palette.primary.main};
+
   animation: ${keyFrameMoveUpDown} 1.5s linear infinite;
 `;
 

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React, { useState, useEffect, lazy } from 'react';
 import styled, { keyframes } from 'styled-components';
 import { Button } from 'antd';
@@ -307,6 +306,7 @@ const InstanceManager = ({ instanceName }) => {
                   height: 35px;
                   text-align: center;
                   cursor: ${props => (props.isPlaying ? 'default' : 'pointer')};
+
                   .spinner:before {
                     animation: 1.5s linear infinite ${Spinner};
                     animation-play-state: inherit;

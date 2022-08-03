@@ -1,12 +1,12 @@
-name: rPLauncher Next CI
+name: rPLauncher CI
 
 on:
   push:
     branches:
-      - release
+      - main
   pull_request:
     branches:
-      - release
+      - main
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -23,10 +23,31 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 1
-      - name: Use Node.js 14.16.0
+      - name: Use Node.js 16.13.1
         uses: actions/setup-node@v1
         with:
-          node-version: '14.16.0'
+          node-version: '16.13.1'
+
+      - name: Install Nightly
+        run: |
+          rustup toolchain install nightly
+
+      - name: Install rust (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          rustup target add x86_64-pc-windows-msvc --toolchain nightly
+      - name: Install rust (MacOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          rustup target add aarch64-apple-darwin --toolchain nightly
+      - name: Install rust (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          rustup target add x86_64-unknown-linux-gnu --toolchain nightly
+
+      - name: Switch rust to nightly
+        run: |
+          rustup default nightly
 
       - name: npm run install
         run: |
@@ -42,10 +63,12 @@ jobs:
           APPVEYOR_REPO_TAG_NAME: ''
           CIRCLE_TAG: ''
           BITRISE_GIT_TAG: ''
+          GITHUB_ACTIONS: ''
           CI_BUILD_TAG: ''
-          RELEASE_TESTING: false
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
-          CSC_LINK: ${{ secrets.CSC_LINK }}
+          SENTRY_DSN: "${{ github.ref == 'refs/heads/releases' && secrets.SENTRY_DSN || '' }}"
+          SOURCE_MAPS_UPLOAD: "${{ github.ref == 'refs/heads/releases' && secrets.SENTRY_UPLOAD_SOURCE_MAPS_URL || '' }}"
+          SENTRY_AUTH: "${{ github.ref == 'refs/heads/releases' && secrets.SENTRY_AUTH || '' }}"
+          REACT_CF_API_KEY: '${{ secrets.CF_API_KEY }}'
         run: |
           npm run release
       - name: npm run release for mac and linux
@@ -55,9 +78,13 @@ jobs:
           TRAVIS_TAG: ''
           APPVEYOR_REPO_TAG_NAME: ''
           CIRCLE_TAG: ''
+          GITHUB_ACTIONS: ''
           BITRISE_GIT_TAG: ''
           CI_BUILD_TAG: ''
-          RELEASE_TESTING: false
+          SENTRY_DSN: "${{ github.ref == 'refs/heads/releases' && secrets.SENTRY_DSN || '' }}"
+          SOURCE_MAPS_UPLOAD: "${{ github.ref == 'refs/heads/releases' && secrets.SENTRY_UPLOAD_SOURCE_MAPS_URL || '' }}"
+          SENTRY_AUTH: "${{ github.ref == 'refs/heads/releases' && secrets.SENTRY_AUTH || '' }}"
+          REACT_CF_API_KEY: '${{ secrets.CF_API_KEY }}'
         run: |
           npm run release
       - name: upload release to gh releases
@@ -83,3 +110,14 @@ jobs:
         with:
           name: Linux Release
           path: deploy
+
+      - uses: actions/setup-ruby@v1
+      - name: Send Webhook Notification
+        if: matrix.os == 'macos-latest'
+        env:
+          JOB_STATUS: ${{ job.status }}
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          git clone https://github.com/gorilla-devs/github-actions-discord-webhook.git webhook
+          bash webhook/send.sh $JOB_STATUS $WEBHOOK_URL
+        shell: bash

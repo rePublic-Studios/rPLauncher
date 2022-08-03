@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unstable-nested-components */
 import React, { memo, useState, useEffect, useCallback } from 'react';
 import styled, { keyframes } from 'styled-components';
 import memoize from 'memoize-one';

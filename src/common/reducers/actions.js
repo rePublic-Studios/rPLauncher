@@ -39,14 +39,15 @@ import {
   FMLLIBS_OUR_BASE_URL,
   FORGE,
   FTB,
-  GDL_LEGACYJAVAFIXER_MOD_URL,
+  RPL_LEGACYJAVAFIXER_MOD_URL,
   LATEST_JAVA_VERSION,
   MC_RESOURCES_URL,
   MC_STARTUP_METHODS,
   MICROSOFT_OAUTH_CLIENT_ID,
   MICROSOFT_OAUTH_REDIRECT_URL,
   MODRINTH,
-  NEWS_URL
+  NEWS_URL,
+  ACCOUNT_MOJANG
 } from '../utils/constants';
 import {
   getAddon,
@@ -469,54 +470,52 @@ export function downloadJavaLegacyFixer() {
     const state = getState();
     await downloadFile(
       path.join(_getDataStorePath(state), '__JLF__.jar'),
-      GDL_LEGACYJAVAFIXER_MOD_URL
+      RPL_LEGACYJAVAFIXER_MOD_URL
     );
   };
 }
 
-// export function mojangLogin(username, password, redirect = true) {
-//   return async (dispatch, getState) => {
-//     const {
-//       app: { isNewUser, clientToken }
-//     } = getState();
-//     if (!username || !password) {
-//       throw new Error('No username or password provided');
-//     }
-//     try {
-//       let data = null;
-//       try {
-//         data = await mcAuthenticate(username, password, clientToken);
-//         data.accountType = ACCOUNT_MOJANG;
-//       } catch (err) {
-//         console.error(err);
-//         throw new Error('Invalid username or password.');
-//       }
+/* export function mojangLogin(username, password, redirect = true) {
+  return async (dispatch, getState) => {
+    const {
+      app: { isNewUser, clientToken }
+    } = getState();
+    if (!username || !password) {
+      throw new Error('No username or password provided');
+    }
+    try {
+      let data = null;
+      try {
+        ({ data } = await mcAuthenticate(username, password, clientToken));
+        data.accountType = ACCOUNT_MOJANG;
+      } catch (err) {
+        console.error(err);
+        throw new Error('Invalid username or password.');
+      }
 
-//       if (!data?.selectedProfile?.id) {
-//         throw new Error("It looks like you didn't buy the game.");
-//       }
-//       data.skin = await mojangPlayerSkinService(data.selectedProfile.id);
+      if (!data?.selectedProfile?.id) {
+        throw new Error("It looks like you didn't buy the game.");
+      }
+       data.skin = await mojangPlayerSkinService(data.selectedProfile.id);
+      dispatch(updateAccount(data.selectedProfile.id, data));
+      dispatch(updateCurrentAccountId(data.selectedProfile.id));
 
-//       dispatch(updateAccount(data.selectedProfile.id, data));
-//       dispatch(updateCurrentAccountId(data.selectedProfile.id));
-
-//       if (!isNewUser) {
-//         if (redirect) {
-//           dispatch(push('/home'));
-//         }
-//       } else {
-//         dispatch(updateIsNewUser(false));
-//         if (redirect) {
-//           dispatch(push('/onboarding'));
-//         }
-//       }
-//     } catch (err) {
-//       console.error(err);
-//       throw new Error(err);
-//     }
-//   };
-// }
-
+      if (!isNewUser) {
+        if (redirect) {
+          dispatch(push('/home'));
+        }
+      } else {
+        dispatch(updateIsNewUser(false));
+        if (redirect) {
+          dispatch(push('/onboarding'));
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      throw new Error(err);
+    }
+  };
+} */
 export function elyByLogin(username, password, twofactor, redirect = true) {
   return async (dispatch, getState) => {
     const {
@@ -708,7 +707,8 @@ export function loginWithOAuthAccessToken(redirect = true) {
             id: selectedProfile.id,
             name: selectedProfile.name
           },
-          skin: await mojangPlayerSkinService(selectedProfile.id),
+          skin:
+            (await mojangPlayerSkinService(selectedProfile.id)) || undefined,
           user: {
             username: mcUserName
           }
@@ -727,14 +727,14 @@ export function loginWithOAuthAccessToken(redirect = true) {
     } else {
       // Only reload skin
       try {
-        dispatch(
-          updateAccount(selectedProfile.id, {
-            ...currentAccount,
-            skin: await mojangPlayerSkinService(selectedProfile.id)
-          })
-        );
-        if (redirect) {
-          dispatch(push('/home'));
+        const skinUrl = await mojangPlayerSkinService(selectedProfile.id);
+        if (skinUrl) {
+          dispatch(
+            updateAccount(selectedProfile.id, {
+              ...currentAccount,
+              skin: skinUrl
+            })
+          );
         }
       } catch (err) {
         console.warn('Could not fetch skin');
@@ -753,38 +753,46 @@ export function loginWithAccessToken(redirect = true) {
     const currentAccount = _getCurrentAccount(state);
     const { accessToken, clientToken, selectedProfile, accountType } =
       currentAccount;
-
+    if (!accessToken) throw new Error();
     try {
-      /* if (accountType === ACCOUNT_MOJANG) {
-        await mcValidate(accessToken, clientToken);
-        try {
-          const skinUrl = await mojangPlayerSkinService(selectedProfile.id);
-          if (skinUrl) {
-            dispatch(
-              updateAccount(selectedProfile.id, {
-                ...currentAccount,
-                skin: skinUrl
-              })
-            );
-          }
-        } catch (err) {
-          console.warn('Could not fetch skin');
+      switch (accountType) {
+        case ACCOUNT_MOJANG:
+          /* 
+      await mcValidate(accessToken, clientToken);
+      try {
+        const skinUrl = await mojangPlayerSkinService(selectedProfile.id);
+        if (skinUrl) {
+          dispatch(
+            updateAccount(selectedProfile.id, {
+              ...currentAccount,
+              skin: skinUrl
+            })
+          );
         }
-      } else */ if (accountType === ACCOUNT_ELYBY) {
-        await mcElyByValidate(accessToken, clientToken);
-        try {
-          const skinUrl = await elyByPlayerSkinService(selectedProfile.name);
-          if (skinUrl) {
-            dispatch(
-              updateAccount(selectedProfile.id, {
-                ...currentAccount,
-                skin: skinUrl
-              })
-            );
+      } catch (err) {
+        console.warn('Could not fetch skin');
+      }
+          */
+          break;
+        case ACCOUNT_ELYBY:
+          await mcElyByValidate(accessToken, clientToken);
+          try {
+            const skinUrl = await elyByPlayerSkinService(selectedProfile.name);
+            if (skinUrl) {
+              dispatch(
+                updateAccount(selectedProfile.id, {
+                  ...currentAccount,
+                  skin: skinUrl
+                })
+              );
+            }
+          } catch (err) {
+            console.warn('Could not fetch skin');
           }
-        } catch (err) {
-          console.warn('Could not fetch skin');
-        }
+          break;
+        default:
+          console.warn(`Could not find accountType: ${accountType}`);
+          break;
       }
       dispatch(push('/home'));
     } catch (error) {
@@ -792,29 +800,37 @@ export function loginWithAccessToken(redirect = true) {
       // Trying refreshing the stored access token
       if (error.response && error.response.status === 403) {
         try {
-          /* if (accountType === ACCOUNT_MOJANG) {
-            const data = await mcRefresh(accessToken, clientToken);
-            const skinUrl = await mojangPlayerSkinService(
-              data.selectedProfile.id
-            );
-            if (skinUrl) {
-              data.skin = skinUrl;
-            }
-            dispatch(updateAccount(data.selectedProfile.id, data));
-            dispatch(updateCurrentAccountId(data.selectedProfile.id));
-          } else */ if (accountType === ACCOUNT_ELYBY) {
-            const response = await mcElyByRefresh(accessToken, clientToken);
-            if (response.status === 200) {
-              const { data } = response;
-              const skinUrl = await elyByPlayerSkinService(
-                data.selectedProfile.name
-              );
-              if (skinUrl) {
-                data.skin = skinUrl;
+          switch (accountType) {
+            case ACCOUNT_MOJANG:
+              /*
+          const { data } = await mcRefresh(accessToken, clientToken);
+          const skinUrl = await mojangPlayerSkinService(data.selectedProfile.id);
+          if (skinUrl) {
+            data.skin = skinUrl;
+          }
+          dispatch(updateAccount(data.selectedProfile.id, data));
+          dispatch(updateCurrentAccountId(data.selectedProfile.id));
+              */
+              break;
+            case ACCOUNT_ELYBY:
+              {
+                const response = await mcElyByRefresh(accessToken, clientToken);
+                if (response.status === 200) {
+                  const { data } = response;
+                  const skinUrl = await elyByPlayerSkinService(
+                    data.selectedProfile.name
+                  );
+                  if (skinUrl) {
+                    data.skin = skinUrl;
+                  }
+                  dispatch(updateAccount(data.selectedProfile.id, data));
+                  dispatch(updateCurrentAccountId(data.selectedProfile.id));
+                }
               }
-              dispatch(updateAccount(data.selectedProfile.id, data));
-              dispatch(updateCurrentAccountId(data.selectedProfile.id));
-            }
+              break;
+            default:
+              console.warn(`Could not find accountType: ${accountType}`);
+              break;
           }
           if (redirect) {
             dispatch(push('/home'));
@@ -873,47 +889,53 @@ export function loginLocalWithoutAccessToken() {
 
 export function loginThroughNativeLauncher() {
   return async () => {};
-  // return async (dispatch, getState) => {
-  //   const {
-  //     app: { isNewUser }
-  //   } = getState();
-  //   const homedir = await ipcRenderer.invoke('getAppdataPath');
-  //   const mcFolder = process.platform === 'darwin' ? 'minecraft' : '.minecraft';
-  //   const vanillaMCPath =
-  //     process.platform === 'linux'
-  //       ? path.resolve(homedir, '../', mcFolder)
-  //       : path.join(homedir, mcFolder);
-  //   const vnlJson = await fse.readJson(
-  //     path.join(vanillaMCPath, 'launcher_profiles.json')
-  //   );
-  //   try {
-  //     const { clientToken } = vnlJson;
-  //     const { account } = vnlJson.selectedUser;
-  //     const { accessToken } = vnlJson.authenticationDatabase[account];
-  //     const data = await mcRefresh(accessToken, clientToken);
-  //     data.accountType = ACCOUNT_MOJANG;
-  //     const skinUrl = await mojangPlayerSkinService(data.selectedProfile.id);
-  //     if (skinUrl) {
-  //       data.skin = skinUrl;
-  //     }
-  //     // We need to update the accessToken in launcher_profiles.json
-  //     vnlJson.authenticationDatabase[account].accessToken = data.accessToken;
-  //     await fse.outputJson(
-  //       path.join(vanillaMCPath, 'launcher_profiles.json'),
-  //       vnlJson
-  //     );
-  //     dispatch(updateAccount(data.selectedProfile.id, data));
-  //     dispatch(updateCurrentAccountId(data.selectedProfile.id));
-  //     if (isNewUser) {
-  //       dispatch(updateIsNewUser(false));
-  //       dispatch(push('/onboarding'));
-  //     } else {
-  //       dispatch(push('/home'));
-  //     }
-  //   } catch (err) {
-  //     throw new Error(err);
-  //   }
-  // };
+  /*  return async (dispatch, getState) => {
+    const {
+      app: { isNewUser }
+    } = getState();
+
+    const homedir = await ipcRenderer.invoke('getAppdataPath');
+    const mcFolder = process.platform === 'darwin' ? 'minecraft' : '.minecraft';
+    const vanillaMCPath =
+      process.platform === 'linux'
+        ? path.resolve(homedir, '../', mcFolder)
+        : path.join(homedir, mcFolder);
+    const vnlJson = await fse.readJson(
+      path.join(vanillaMCPath, 'launcher_profiles.json')
+    );
+
+    try {
+      const { clientToken } = vnlJson;
+      const { account } = vnlJson.selectedUser;
+      const { accessToken } = vnlJson.authenticationDatabase[account];
+
+      const { data } = await mcRefresh(accessToken, clientToken);
+      data.accountType = ACCOUNT_MOJANG;
+      const skinUrl = await mojangPlayerSkinService(data.selectedProfile.id);
+      if (skinUrl) {
+        data.skin = skinUrl;
+      }
+
+      // We need to update the accessToken in launcher_profiles.json
+      vnlJson.authenticationDatabase[account].accessToken = data.accessToken;
+      await fse.outputJson(
+        path.join(vanillaMCPath, 'launcher_profiles.json'),
+        vnlJson
+      );
+
+      dispatch(updateAccount(data.selectedProfile.id, data));
+      dispatch(updateCurrentAccountId(data.selectedProfile.id));
+
+      if (isNewUser) {
+        dispatch(updateIsNewUser(false));
+        dispatch(push('/onboarding'));
+      } else {
+        dispatch(push('/home'));
+      }
+    } catch (err) {
+      throw new Error(err);
+    }
+  }; */
 }
 
 export function loginOAuth(redirect = true) {
@@ -1033,7 +1055,7 @@ export function loginOAuth(redirect = true) {
           id: mcUserId,
           name: mcUserName
         },
-        skin: await mojangPlayerSkinService(mcUserId),
+        skin: (await mojangPlayerSkinService(mcUserId)) || undefined,
         user: {
           username: mcUserName
         }
@@ -1069,10 +1091,16 @@ export function logout() {
       accountType
     } = _getCurrentAccount(state);
 
-    /* if (accountType === ACCOUNT_MOJANG) {
-      mcInvalidate(accessToken, clientToken).catch(console.error);
-    } else */ if (accountType === ACCOUNT_ELYBY) {
-      mcElyByInvalidate(accessToken, clientToken).catch(console.error);
+    switch (accountType) {
+      case ACCOUNT_MOJANG:
+        /* mcInvalidate(accessToken, clientToken).catch(console.error); */
+        break;
+      case ACCOUNT_ELYBY:
+        mcElyByInvalidate(accessToken, clientToken).catch(console.error);
+        break;
+      default:
+        console.warn(`Could not find accountType: ${accountType}`);
+        break;
     }
 
     dispatch(removeAccount(id));
@@ -1795,10 +1823,129 @@ export function processFTBManifest(instanceName) {
     const instancePath = path.join(instancesPath, instanceName);
     const fileHashes = {};
 
-    const { files } = manifest;
+    const { files: allFiles } = manifest;
     const concurrency = state.settings.concurrentDownloads;
 
+    const files = allFiles.filter(v => v.url && v.url !== '');
+    const CFFiles = allFiles.filter(v => !v.url || v.url === '');
+
+    dispatch(updateDownloadStatus(instanceName, 'Downloading CF files...'));
+    const addonsHashmap = {};
+    const addonsFilesHashmap = {};
+
+    // DOWNLOAD CF FILES
+
+    const _getAddons = async () => {
+      console.log(CFFiles.map(v => v.curseforge?.project));
+      const addons = await getMultipleAddons(
+        CFFiles.map(v => v.curseforge?.project)
+      );
+
+      addons.forEach(v => {
+        addonsHashmap[v.id] = v;
+      });
+    };
+
+    const _getAddonFiles = async () => {
+      await pMap(
+        CFFiles,
+        async item => {
+          const modManifest = await getAddonFile(
+            item.curseforge?.project,
+            item.curseforge?.file
+          );
+
+          addonsFilesHashmap[item.curseforge?.project] = modManifest;
+        },
+        { concurrency: concurrency + 10 }
+      );
+    };
+
+    await Promise.all([_getAddons(), _getAddonFiles()]);
+
     let modManifests = [];
+    const optedOutMods = [];
+    await pMap(
+      CFFiles,
+      async item => {
+        if (!addonsHashmap[item.curseforge?.project]) return;
+        let ok = false;
+        let tries = 0;
+        /* eslint-disable no-await-in-loop */
+        do {
+          tries += 1;
+          if (tries !== 1) {
+            await new Promise(resolve => setTimeout(resolve, 5000));
+          }
+
+          const addon = addonsHashmap[item.curseforge?.project];
+          const isResourcePack = addon.classId === 12;
+          const modManifest = addonsFilesHashmap[item.curseforge?.project];
+          const destFile = path.join(
+            _getInstancesPath(state),
+            instanceName,
+            isResourcePack ? 'resourcepacks' : 'mods',
+            modManifest.fileName
+          );
+
+          const fileExists = await fse.pathExists(destFile);
+
+          if (!fileExists) {
+            if (!modManifest.downloadUrl) {
+              const normalizedModData = normalizeModData(
+                modManifest,
+                item.curseforge?.project,
+                addon.name
+              );
+
+              optedOutMods.push({ addon, modManifest: normalizedModData });
+              return;
+            }
+            await downloadFile(destFile, modManifest.downloadUrl);
+            modManifests = modManifests.concat(
+              normalizeModData(
+                modManifest,
+                item.curseforge?.project,
+                addon.name
+              )
+            );
+          }
+          const percentage = (modManifests.length * 100) / CFFiles.length - 1;
+
+          dispatch(updateDownloadProgress(percentage > 0 ? percentage : 0));
+          ok = true;
+        } while (!ok && tries <= 3);
+        /* eslint-enable no-await-in-loop */
+      },
+      { concurrency }
+    );
+
+    if (optedOutMods.length) {
+      await new Promise((resolve, reject) => {
+        dispatch(
+          openModal('OptedOutModsList', {
+            optedOutMods,
+            instancePath: path.join(_getInstancesPath(state), instanceName),
+            resolve,
+            reject,
+            abortCallback: () => {
+              setTimeout(
+                () => reject(new Error('Download Aborted by the user')),
+                300
+              );
+            }
+          })
+        );
+      });
+    }
+
+    modManifests = modManifests.concat(
+      ...optedOutMods.map(v =>
+        normalizeModData(v.modManifest, v.modManifest.projectID, v.addon.name)
+      )
+    );
+
+    // DOWNLOAD FTB FILES
 
     let prev = 0;
     const updatePercentage = downloaded => {
@@ -1816,7 +1963,6 @@ export function processFTBManifest(instanceName) {
         path: path.join(instancePath, item.path, item.name)
       };
     });
-
     dispatch(updateDownloadStatus(instanceName, 'Downloading FTB files...'));
     await downloadInstanceFiles(
       mappedFiles,
@@ -1995,10 +2141,7 @@ export function processForgeManifest(instanceName) {
                 addon.name
               );
 
-              optedOutMods.push({
-                addon,
-                modManifest: normalizedModData
-              });
+              optedOutMods.push({ addon, modManifest: normalizedModData });
               return;
             }
             await downloadFile(destFile, modManifest.downloadUrl);
@@ -2407,7 +2550,6 @@ export function downloadInstance(instanceName) {
       if (mcJson.assets === 'legacy') {
         await copyAssetsToLegacy(assets);
       }
-
       if (loader?.loaderType === FABRIC) {
         await dispatch(downloadFabric(instanceName));
       } else if (loader?.loaderType === FORGE) {
@@ -2475,6 +2617,7 @@ export const changeModpackVersion = (instanceName, newModpackData) => {
     switch (instance.loader.source) {
       case CURSEFORGE: {
         const addon = await getAddon(instance.loader?.projectID);
+
         const manifest = await fse.readJson(
           path.join(instancePath, 'manifest.json')
         );
@@ -2619,7 +2762,6 @@ export const changeModpackVersion = (instanceName, newModpackData) => {
             `background${path.extname(imageURL)}`
           )
         );
-
         break;
       }
       case MODRINTH: {
@@ -3152,7 +3294,9 @@ export function launchInstance(instanceName, forceQuit = false) {
     const { userData } = state;
     const account = _getCurrentAccount(state);
     const librariesPath = _getLibrariesPath(state);
-    const exeData = await ipcRenderer.invoke('getExecutablePath');
+    let exeData = await ipcRenderer.invoke('getExecutablePath');
+    if (process.env.NODE_ENV === 'development')
+      exeData = path.resolve(exeData, '../../../required');
     const assetsPath = _getAssetsPath(state);
     const { memory, args } = state.settings.java;
     const { resolution: globalMinecraftResolution } =
@@ -3443,12 +3587,12 @@ export function launchInstance(instanceName, forceQuit = false) {
 
     const javaArguments = `${
       account.accountType === ACCOUNT_ELYBY
-        ? `-javaagent:${exeData}\\authlib-injector.jar=ely.by`
+        ? `-javaagent:${exeData}\\authlib-injector.jar=ely.by `
         : ``
-    } ${javaArgs !== undefined ? javaArgs : args}`.split(' ');
+    }${javaArgs !== undefined ? javaArgs : args}`.split(' ');
     const javaMem = javaMemory !== undefined ? javaMemory : memory;
     const gameResolution = instanceResolution || globalMinecraftResolution;
-
+    console.log(javaArguments);
     const jvmArguments = getJvmArguments(
       libraries,
       mcMainFile,
@@ -3488,6 +3632,7 @@ export function launchInstance(instanceName, forceQuit = false) {
     );
 
     const needsQuote = process.platform !== 'win32';
+
     console.log(
       `${addQuotes(needsQuote, javaPath)} ${getJvmArguments(
         libraries,
@@ -3993,7 +4138,7 @@ export const isNewVersionAvailable = async () => {
 
   try {
     const rChannel = await fs.readFile(
-      path.join(appData, 'rplauncher_next', 'rChannel')
+      path.join(appData, 'rplauncher', 'rChannel')
     );
     releaseChannel = parseInt(rChannel.toString(), 10);
   } catch {

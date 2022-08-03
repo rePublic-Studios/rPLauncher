@@ -54,6 +54,7 @@
     <script>
       (function () {
         if (process.env.NODE_ENV !== 'development') {
+          window.gaInitialized = true;
           window.ga =
             window.ga ||
             function () {

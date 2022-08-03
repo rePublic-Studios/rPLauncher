@@ -24,7 +24,6 @@ const SubNoInstance = styled.div`
   font-size: 15px;
   margin-top: 20px;
 `;
-
 const sortAlphabetical = instances =>
   instances.sort((a, b) => (a.name > b.name ? 1 : -1));
 

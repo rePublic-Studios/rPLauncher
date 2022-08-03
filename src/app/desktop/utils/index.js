@@ -2,7 +2,7 @@ import fss, { promises as fs } from 'fs';
 import originalFs from 'original-fs';
 import fse from 'fs-extra';
 import axios from 'axios';
-import * as Seven from 'node-7z';
+import { extractFull } from 'node-7z';
 import jimp from 'jimp/es';
 import makeDir from 'make-dir';
 import { promisify } from 'util';
@@ -16,6 +16,7 @@ import {
   FORGE,
   LATEST_JAVA_VERSION
 } from '../../../common/utils/constants';
+
 import {
   addQuotes,
   removeDuplicates,
@@ -401,38 +402,6 @@ export const get7zPath = async () => {
 
 get7zPath();
 
-export const extract = async (source, destination, args = {}, funcs = {}) => {
-  const sevenZipPath = await get7zPath();
-  const extraction = Seven.extract(source, destination, {
-    ...args,
-    yes: true,
-    $bin: sevenZipPath,
-    $spawnOptions: { shell: true }
-  });
-  let extractedParentDir = null;
-  await new Promise((resolve, reject) => {
-    if (funcs.progress) {
-      extraction.on('progress', ({ percent }) => {
-        funcs.progress(percent);
-      });
-    }
-    extraction.on('data', data => {
-      if (!extractedParentDir) {
-        [extractedParentDir] = data.file.split('/');
-      }
-    });
-    extraction.on('end', () => {
-      funcs.end?.();
-      resolve(extractedParentDir);
-    });
-    extraction.on('error', err => {
-      funcs.error?.();
-      reject(err);
-    });
-  });
-  return { extraction, extractedParentDir };
-};
-
 export const extractAll = async (
   source,
   destination,
@@ -440,7 +409,7 @@ export const extractAll = async (
   funcs = {}
 ) => {
   const sevenZipPath = await get7zPath();
-  const extraction = Seven.extractFull(source, destination, {
+  const extraction = extractFull(source, destination, {
     ...args,
     yes: true,
     $bin: sevenZipPath,
@@ -673,10 +642,16 @@ export const getJVMArguments112 = (
           val = account.selectedProfile.id.trim();
           break;
         case 'auth_access_token':
-          val = hideAccessToken ? hiddenToken : account.accessToken;
+          val =
+            hideAccessToken || account.accessToken == null
+              ? hiddenToken
+              : account.accessToken;
           break;
         case 'auth_session':
-          val = hideAccessToken ? hiddenToken : account.accessToken;
+          val =
+            hideAccessToken || account.accessToken == null
+              ? hiddenToken
+              : account.accessToken;
           break;
         case 'user_type':
           val = 'mojang';
@@ -748,7 +723,6 @@ export const getJVMArguments113 = (
   args.push(mcJson.mainClass);
 
   args.push(...mcJson.arguments.game.filter(v => !skipLibrary(v)));
-
   for (let i = 0; i < args.length; i += 1) {
     if (typeof args[i] === 'object' && args[i].rules) {
       if (typeof args[i].value === 'string') {
@@ -781,7 +755,10 @@ export const getJVMArguments113 = (
             val = account.selectedProfile.id.trim();
             break;
           case 'auth_access_token':
-            val = hideAccessToken ? hiddenToken : account.accessToken;
+            val =
+              hideAccessToken || account.accessToken == null
+                ? hiddenToken
+                : account.accessToken;
             break;
           case 'user_type':
             val = 'mojang';

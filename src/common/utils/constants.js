@@ -1,21 +1,20 @@
 export const RP_API_URL = 'https://api.tribbe.dev/rplauncher';
-export const GDL_LEGACYJAVAFIXER_MOD_URL =
+export const MC_MANIFEST_URL =
+  'https://launchermeta.mojang.com/mc/game/version_manifest.json';
+export const MC_RESOURCES_URL = 'http://resources.download.minecraft.net';
+export const FABRIC_APIS = 'https://meta.fabricmc.net/v2';
+export const RPL_LEGACYJAVAFIXER_MOD_URL =
   'https://cdn.tribbe.dev/rplauncher/legacyjavafixer-1.0.jar';
+export const MOJANG_APIS = 'https://authserver.mojang.com';
+export const ELYBY_APIS = 'https://authserver.ely.by/auth';
 export const JAVA_MANIFEST_URL =
   'https://cdn.tribbe.dev/rplauncher/openjdk8.json';
 export const LATEST_JAVA_VERSION = 17;
 export const JAVA_LATEST_MANIFEST_URL =
   'https://cdn.tribbe.dev/rplauncher/openjdk17.json';
-export const FORGESVC_URL = 'https://api.tribbe.dev/rplauncher/cf';
-
-export const MC_MANIFEST_URL =
-  'https://launchermeta.mojang.com/mc/game/version_manifest.json';
-export const MC_RESOURCES_URL = 'http://resources.download.minecraft.net';
-export const FABRIC_APIS = 'https://meta.fabricmc.net/v2';
-export const MOJANG_APIS = 'https://authserver.mojang.com';
-export const ELYBY_APIS = 'https://authserver.ely.by/auth';
 export const MAVEN_REPO = 'http://central.maven.org/maven2';
 export const MC_LIBRARIES_URL = 'https://libraries.minecraft.net';
+export const FORGESVC_URL = 'https://api.curseforge.com/v1';
 export const FTB_API_URL = 'https://api.modpacks.ch/public';
 export const FTB_MODPACK_URL = 'https://feed-the-beast.com/modpack';
 export const MODRINTH_API_URL = 'https://api.modrinth.com/v2';

@@ -23,8 +23,10 @@ const {
 } = require('base64url');
 const { URL } = require('url');
 const UserAgent = require('user-agents');
-const murmur = require('./native/murmur2');
 const nsfw = require('./native/nsfw');
+const napi = require('./native/napi');
+
+// console.log(napi.fibonacci(10));
 
 const fs = fss.promises;
 
@@ -633,7 +635,9 @@ const removeOriginHeader = (details, callback) => {
 
 ipcMain.handle('download-optedout-mod', async (e, { url, filePath }) => {
   let win = new BrowserWindow();
-  win.webContents.openDevTools();
+
+  await win.webContents.session.clearCache();
+  await win.webContents.session.clearStorageData();
 
   win.webContents.session.webRequest.onBeforeSendHeaders(removeOriginHeader);
 
@@ -727,7 +731,9 @@ ipcMain.handle('download-optedout-mod', async (e, { url, filePath }) => {
 
 ipcMain.handle('download-optedout-mods', async (e, { mods, instancePath }) => {
   let win = new BrowserWindow();
-  win.webContents.openDevTools();
+
+  await win.webContents.session.clearCache();
+  await win.webContents.session.clearStorageData();
 
   win.webContents.session.webRequest.onBeforeSendHeaders(removeOriginHeader);
 
@@ -862,13 +868,9 @@ ipcMain.handle('stop-listener', async () => {
   }
 });
 
-ipcMain.handle('calculateMurmur2FromPath', (e, filePath) => {
-  return new Promise((resolve, reject) => {
-    return murmur(filePath).then(v => {
-      if (v.toString().length === 0) reject();
-      return resolve(v);
-    });
-  });
+ipcMain.handle('calculateMurmur2FromPath', async (e, filePath) => {
+  const res = await napi.computePathMurmur(filePath);
+  return res.toString();
 });
 
 // AutoUpdater

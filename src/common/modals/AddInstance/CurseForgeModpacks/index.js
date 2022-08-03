@@ -119,7 +119,7 @@ const CurseForgeModpacks = ({ setStep, setVersion, setModpack }) => {
                       width: 16px;
                       margin-right: 10px;
                     `}
-                    alt=""
+                    alt="icon"
                   />
                   {v?.name}
                 </div>

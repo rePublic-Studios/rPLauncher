@@ -194,12 +194,14 @@ const Overview = ({ instanceName, background, manifest }) => {
   const [screenResolution, setScreenResolution] = useState(null);
   const [height, setHeight] = useState(config?.resolution?.height);
   const [width, setWidth] = useState(config?.resolution?.width);
+
   useEffect(() => {
     ipcRenderer
       .invoke('getAllDisplaysBounds')
       .then(setScreenResolution)
       .catch(console.error);
   }, []);
+
   const updateJavaMemory = v => {
     dispatch(
       updateInstanceConfig(instanceName, prev => ({
@@ -208,6 +210,7 @@ const Overview = ({ instanceName, background, manifest }) => {
       }))
     );
   };
+
   const updateJavaArguments = v => {
     dispatch(
       updateInstanceConfig(instanceName, prev => ({
@@ -216,6 +219,7 @@ const Overview = ({ instanceName, background, manifest }) => {
       }))
     );
   };
+
   const updateCustomJavaPath = v => {
     dispatch(
       updateInstanceConfig(instanceName, prev => ({

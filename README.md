@@ -37,7 +37,7 @@ To download the latest version, you can click [here](https://github.com/rePublic
 - Install `mods` for both fabric and forge directly from our UI
 - Built-in auto-updater. The launcher will always keep itself updated to the latest release.
 - Easily manage multiple `accounts` and switch between them.
-  - Mojang
+  - Microsoft (previously Mojang)
   - ely.by
 - Still playing on your grandma pc from the 80s? Don't worry, we got you covered with our `Potato PC Mode`!
 

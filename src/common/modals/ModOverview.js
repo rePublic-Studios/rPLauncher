@@ -56,6 +56,7 @@ const ModOverview = ({
   const [updatedDate, setUpdatedDate] = useState(0);
   const [gameVersion, setGameVersion] = useState('');
   const [url, setUrl] = useState('');
+  // end
   const [files, setFiles] = useState([]);
   const [selectedItem, setSelectedItem] = useState(fileID);
   const [installedData, setInstalledData] = useState({ fileID, fileName });
@@ -287,8 +288,9 @@ const ModOverview = ({
                   font-weight: 700;
                 `}
               >
-                The installed version of this mod has been taken down, so you
-                will only be able to get it as part of legacy modpacks.
+                The installed version of this mod has been removed from
+                CurseForge, so you will only be able to get it as part of legacy
+                modpacks.
               </div>
             )}
           <StyledSelect

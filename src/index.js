@@ -65,31 +65,31 @@ window.addEventListener('mouseup', e => {
 //               return frame;
 //             }
 
-//           // eslint-disable-next-line no-param-reassign
-//           frame.filename = frame.filename.replace('file://', '');
-//           // Check if the frame filename begins with `/` or a Windows-style prefix such as `C:\`
-//           const isWindowsFrame = /^[A-Z]:\\/.test(frame.filename);
-//           const startsWithSlash = /^\//.test(frame.filename);
-//           if (isWindowsFrame || startsWithSlash) {
-//             const filename = isWindowsFrame
-//               ? frame.filename
-//                   .replace(/^[A-Z]:/, '') // remove Windows-style prefix
-//                   .replace(/\\/g, '/') // replace all `\\` instances with `/`
-//               : frame.filename;
-//             const base = basename(filename);
 //             // eslint-disable-next-line no-param-reassign
-//             frame.filename = `app:///${base}`;
+//             frame.filename = frame.filename.replace('file://', '');
+//             // Check if the frame filename begins with `/` or a Windows-style prefix such as `C:\`
+//             const isWindowsFrame = /^[A-Z]:\\/.test(frame.filename);
+//             const startsWithSlash = /^\//.test(frame.filename);
+//             if (isWindowsFrame || startsWithSlash) {
+//               const filename = isWindowsFrame
+//                 ? frame.filename
+//                     .replace(/^[A-Z]:/, '') // remove Windows-style prefix
+//                     .replace(/\\/g, '/') // replace all `\\` instances with `/`
+//                 : frame.filename;
+//               const base = basename(filename);
+//               // eslint-disable-next-line no-param-reassign
+//               frame.filename = `app:///${base}`;
+//             }
+//             return frame;
 //           }
-//           return frame;
-//         }
-//       })
-//     ],
-//     tracesSampleRate: 0.5,
-//     release: version,
-//     dist: `${process.env.REACT_APP_RELEASE_TYPE}-${os.platform()}`
-//   });
-// })
-// .catch(console.error);
+//         })
+//       ],
+//       tracesSampleRate: 0.5,
+//       release: version,
+//       dist: `${process.env.REACT_APP_RELEASE_TYPE}-${os.platform()}`
+//     });
+//   })
+//   .catch(console.error);
 
 ReactDOM.render(
   <Provider store={store}>

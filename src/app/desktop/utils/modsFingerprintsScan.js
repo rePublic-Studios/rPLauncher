@@ -48,7 +48,7 @@ const modsFingerprintsScan = async instancesPath => {
               missingMods[file] = murmurHash;
             }
           }
-        } catch { }
+        } catch {}
       }
 
       // Check for old mods in config that are not present on local storage

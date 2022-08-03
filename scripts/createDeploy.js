@@ -125,6 +125,7 @@ extraFiles.push({
   from: sevenZipPath,
   to: './'
 });
+
 const commonConfig = {
   publish: 'never',
   config: {

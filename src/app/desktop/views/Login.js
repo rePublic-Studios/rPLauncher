@@ -9,7 +9,6 @@ import { Input, Button, Menu, Dropdown } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useKey } from 'rooks';
 import {
-  // mojangLogin,
   elyByLogin,
   loginOAuth,
   localLogin
@@ -129,7 +128,7 @@ const StyledButton = styled(Button)`
   width: 40%;
 `;
 
-/* const Loading = styled.div`
+const Loading = styled.div`
   position: absolute;
   width: 100%;
   height: 100%;
@@ -142,7 +141,8 @@ const StyledButton = styled(Button)`
   transition: 0.3s ease-in-out;
   opacity: ${({ transitionState }) =>
     transitionState === 'entering' || transitionState === 'entered' ? 1 : 0};
-`; */
+`;
+
 const LoginFailMessage = styled.div`
   color: ${props => props.theme.palette.colors.red};
 `;
@@ -166,19 +166,19 @@ const Login = () => {
   );
   const [accountType, setAccountType] = useState(null);
 
-  // const authenticateMojang = () => {
-  //   if (!email || !password) return;
-  //   dispatch(requesting('accountAuthentication'));
-  //   setTimeout(() => {
-  //     dispatch(
-  //       load(features.mcAuthentication, dispatch(mojangLogin(email, password)))
-  //     ).catch(e => {
-  //       console.error(e);
-  //       setLoginFailed(e);
-  //       setPassword(null);
-  //     });
-  //   }, 1000);
-  // };
+  /*  const authenticateMojang = () => {
+    if (!email || !password) return;
+    dispatch(requesting('accountAuthentication'));
+    setTimeout(() => {
+      dispatch(
+        load(features.mcAuthentication, dispatch(login(email, password)))
+      ).catch(e => {
+        console.error(e);
+        setLoginFailed(e);
+        setPassword(null);
+      });
+    }, 1000);
+  }; */
 
   const authenticateElyBy = () => {
     if (!email || !password) return;
@@ -589,6 +589,7 @@ const Login = () => {
               <source src={backgroundVideo} type="video/webm" />
             </video>
           </Background>
+          <Loading transitionState={transitionState}>Loading...</Loading>
         </Container>
       )}
     </Transition>
