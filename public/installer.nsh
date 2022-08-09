@@ -24,7 +24,7 @@
         MessageBox MB_YESNO "Also delete all your user data? (instances, preferences...)" IDNO Skipped IDYES Accepted
 
         Accepted:
-            FileOpen $4 "$APPDATA\rplauncher\override.data" r
+            FileOpen $4 "$APPDATA\rplauncher_next\override.data" r
             FileRead $4 $0
             RMDir /r "$0\instances"
             RMDir /r "$0\java"
@@ -50,7 +50,7 @@
             
             FileClose $4
 
-            RMDir /r "$APPDATA\rplauncher"
+            RMDir /r "$APPDATA\rplauncher_next"
             Goto done
         Skipped:
             Goto done

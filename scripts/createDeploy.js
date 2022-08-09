@@ -7,7 +7,7 @@ const makeDir = require('make-dir');
 const { pipeline } = require('stream');
 const fse = require('fs-extra');
 const electronBuilder = require('electron-builder');
-const dotenv = require('dotenv');
+const dotenv = require('dotenv-flow');
 
 dotenv.config();
 

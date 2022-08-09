@@ -26,7 +26,8 @@ import { downloadFile } from '../app/desktop/utils/downloader';
 // eslint-disable-next-line import/no-cycle
 import { extractAll } from '../app/desktop/utils';
 
-const axioInstance = axios.create({
+const curseforgeClient = axios.create({
+  baseURL: FORGESVC_URL,
   headers: {
     'X-API-KEY': '$2a$10$5BgCleD8.rLQ5Ix17Xm2lOjgfoeTJV26a1BXmmpwrOemgI517.nuC',
     'Content-Type': 'application/json',
@@ -39,6 +40,10 @@ const modrinthClient = axios.create({
   headers: {
     // 'User-Agent': `rePublic-Studios/rPLauncher/${appVersion}`
   }
+});
+
+const FTBClient = axios.create({
+  baseURL: FTB_API_URL
 });
 
 const trackFTBAPI = () => {
@@ -314,16 +319,14 @@ export const getFabricJson = ({ mcVersion, loaderVersion }) => {
 
 export const getAddon = async projectID => {
   trackCurseForgeAPI();
-  const url = `${FORGESVC_URL}/mods/${projectID}`;
-  const { data } = await axioInstance.get(url);
+  const { data } = await curseforgeClient.get(`mods/${projectID}`);
   return data?.data;
 };
 
 export const getMultipleAddons = async addons => {
   trackCurseForgeAPI();
-  const url = `${FORGESVC_URL}/mods`;
-  const { data } = await axioInstance.post(
-    url,
+  const { data } = await curseforgeClient.post(
+    `/mods`,
     JSON.stringify({
       modIds: addons
     })
@@ -338,8 +341,9 @@ export const getAddonFiles = async projectID => {
   let hasMore = true;
 
   while (hasMore) {
-    const url = `${FORGESVC_URL}/mods/${projectID}/files?pageSize=400&index=${results.length}`;
-    const { data } = await axioInstance.get(url);
+    const { data } = await curseforgeClient.get(
+      `/mods/${projectID}/files?pageSize=400&index=${results.length}`
+    );
     results.push(...(data.data || []));
 
     hasMore = data.pagination.totalCount > results.length;
@@ -350,45 +354,45 @@ export const getAddonFiles = async projectID => {
 
 export const getAddonDescription = async projectID => {
   trackCurseForgeAPI();
-  const url = `${FORGESVC_URL}/mods/${projectID}/description`;
-  const { data } = await axioInstance.get(url);
+  const { data } = await curseforgeClient.get(`/mods/${projectID}/description`);
   return data?.data;
 };
 
 export const getAddonFile = async (projectID, fileID) => {
   trackCurseForgeAPI();
-  const url = `${FORGESVC_URL}/mods/${projectID}/files/${fileID}`;
-  const { data } = await axioInstance.get(url);
+  const { data } = await curseforgeClient.get(
+    `/mods/${projectID}/files/${fileID}`
+  );
   return data?.data;
 };
 
 export const getAddonsByFingerprint = async fingerprints => {
   trackCurseForgeAPI();
-  const url = `${FORGESVC_URL}/fingerprints`;
-  const { data } = await axioInstance.post(url, { fingerprints });
+  const { data } = await curseforgeClient.post(`/fingerprints`, {
+    fingerprints
+  });
 
   return data?.data;
 };
 
 export const getAddonFileChangelog = async (projectID, fileID) => {
   trackCurseForgeAPI();
-  const url = `${FORGESVC_URL}/mods/${projectID}/files/${fileID}/changelog`;
-  const { data } = await axioInstance.get(url);
+  const { data } = await curseforgeClient.get(
+    `/mods/${projectID}/files/${fileID}/changelog`
+  );
 
   return data?.data;
 };
 
 export const getCurseForgeCategories = async () => {
   trackCurseForgeAPI();
-  const url = `${FORGESVC_URL}/categories?gameId=432`;
-  const { data } = await axioInstance.get(url);
+  const { data } = await curseforgeClient.get(`/categories?gameId=432`);
   return data.data;
 };
 
 export const getCFVersionIds = async () => {
   trackCurseForgeAPI();
-  const url = `${FORGESVC_URL}/games/432/versions`;
-  const { data } = await axioInstance.get(url);
+  const { data } = await curseforgeClient.get(`/games/432/versions`);
   return data.data;
 };
 
@@ -404,7 +408,6 @@ export const getCurseForgeSearch = async (
   modLoaderType
 ) => {
   trackCurseForgeAPI();
-  const url = `${FORGESVC_URL}/mods/search`;
 
   // Map sort to sortField
   let sortField = 1;
@@ -443,15 +446,14 @@ export const getCurseForgeSearch = async (
     searchFilter
   };
 
-  const { data } = await axioInstance.get(url, { params });
+  const { data } = await curseforgeClient.get(`/mods/search`, { params });
   return data?.data;
 };
 
 export const getFTBModpackData = async modpackId => {
   trackFTBAPI();
   try {
-    const url = `${FTB_API_URL}/modpack/${modpackId}`;
-    const { data } = await axios.get(url);
+    const { data } = await FTBClient.get(`/modpack/${modpackId}`);
     return data;
   } catch {
     return { status: 'error' };
@@ -461,8 +463,7 @@ export const getFTBModpackData = async modpackId => {
 export const getFTBModpackVersionData = async (modpackId, versionId) => {
   trackFTBAPI();
   try {
-    const url = `${FTB_API_URL}/modpack/${modpackId}/${versionId}`;
-    const { data } = await axios.get(url);
+    const { data } = await FTBClient.get(`/modpack/${modpackId}/${versionId}`);
     return data;
   } catch {
     return { status: 'error' };
@@ -481,14 +482,12 @@ export const getFTBChangelog = async (modpackId, versionId) => {
 
 export const getFTBMostPlayed = async () => {
   trackFTBAPI();
-  const url = `${FTB_API_URL}/modpack/popular/plays/1000`;
-  return axios.get(url);
+  return FTBClient.get(`/modpack/popular/plays/1000`);
 };
 
 export const getFTBSearch = async searchText => {
   trackFTBAPI();
-  const url = `${FTB_API_URL}/modpack/search/1000?term=${searchText}`;
-  return axios.get(url);
+  return FTBClient.get(`/modpack/search/1000?term=${searchText}`);
 };
 
 /**
@@ -497,8 +496,9 @@ export const getFTBSearch = async searchText => {
  */
 export const getModrinthMostPlayedModpacks = async (offset = 0) => {
   trackModrinthAPI();
-  const url = `/search?limit=20&offset=${offset}&index=downloads&facets=[["project_type:modpack"]]`;
-  const { data } = await modrinthClient.get(url);
+  const { data } = await modrinthClient.get(
+    `/search?limit=20&offset=${offset}&index=downloads&facets=[["project_type:modpack"]]`
+  );
   return data;
 };
 
@@ -565,8 +565,9 @@ export const getModrinthProject = async projectId => {
 export const getModrinthProjects = async projectIds => {
   trackModrinthAPI();
   try {
-    const url = `/projects?ids=${JSON.stringify(projectIds)}`;
-    const { data } = await modrinthClient.get(url);
+    const { data } = await modrinthClient.get(
+      `/projects?ids=${JSON.stringify(projectIds)}`
+    );
     return data.map(fixModrinthProjectObject);
   } catch {
     return { status: 'error' };
@@ -580,8 +581,7 @@ export const getModrinthProjects = async projectIds => {
 export const getModrinthProjectVersions = async projectId => {
   trackModrinthAPI();
   try {
-    const url = `/project/${projectId}/version`;
-    const { data } = await modrinthClient.get(url);
+    const { data } = await modrinthClient.get(`/project/${projectId}/version`);
     return data;
   } catch {
     return { status: 'error' };
@@ -603,8 +603,9 @@ export const getModrinthVersion = async versionId => {
 export const getModrinthVersions = async versionIds => {
   trackModrinthAPI();
   try {
-    const url = `versions?ids=${JSON.stringify(versionIds)}`;
-    const { data } = await modrinthClient.get(url);
+    const { data } = await modrinthClient.get(
+      `versions?ids=${JSON.stringify(versionIds)}`
+    );
     return data || [];
   } catch (err) {
     console.error(err);
@@ -680,8 +681,7 @@ export const getModrinthVersionChangelog = async versionId => {
 export const getModrinthUser = async userId => {
   trackModrinthAPI();
   try {
-    const url = `/user/${userId}`;
-    const { data } = await modrinthClient.get(url);
+    const { data } = await modrinthClient.get(`/user/${userId}`);
     return data;
   } catch (err) {
     console.error(err);
@@ -702,8 +702,7 @@ const fixModrinthProjectObject = project => {
 export const getModrinthCategories = async () => {
   trackModrinthAPI();
   try {
-    const url = '/tag/category';
-    const { data } = await modrinthClient.get(url);
+    const { data } = await modrinthClient.get('/tag/category');
     return data;
   } catch (err) {
     console.error(err);
@@ -717,8 +716,7 @@ export const getModrinthCategories = async () => {
 export const getModrinthProjectMembers = async projectId => {
   trackModrinthAPI();
   try {
-    const url = `/project/${projectId}/members`;
-    const { data } = await modrinthClient.get(url);
+    const { data } = await modrinthClient.get(`/project/${projectId}/members`);
     return data;
   } catch (err) {
     console.error(err);
@@ -733,8 +731,10 @@ export const getModrinthProjectMembers = async projectId => {
 export const getVersionsFromHashes = async (hashes, algorithm) => {
   trackModrinthAPI();
   try {
-    const url = '/version_files';
-    const { data } = await modrinthClient.post(url, { hashes, algorithm });
+    const { data } = await modrinthClient.post('/version_files', {
+      hashes,
+      algorithm
+    });
     return data;
   } catch (err) {
     console.error(err);

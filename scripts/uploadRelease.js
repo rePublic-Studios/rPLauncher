@@ -3,9 +3,9 @@ const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
 const fse = require('fs-extra');
-const dotenv = require('dotenv');
+const dotenv = require('dotenv-flow');
 
-dotenv.config({ path: '.env.local' });
+dotenv.config();
 
 const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
@@ -24,7 +24,12 @@ const main = async () => {
   let uploadUrl = null;
   try {
     const { data: releasesList } = await axios.default.get(
-      `https://api.github.com/repos/rePublic-Studios/rPLauncher/releases`
+      `https://api.github.com/repos/rePublic-Studios/rPLauncher/releases`,
+      {
+        headers: {
+          Authorization: `token ${process.env.GH_ACCESS_TOKEN_RELEASES}`
+        }
+      }
     );
 
     const lastRelease = releasesList.find(v => v.tag_name === `v${version}`);
@@ -39,12 +44,16 @@ const main = async () => {
 
     const getChangeLog = async () => {
       const { data: commitList } = await axios.default.get(
-        `https://api.github.com/repos/rePublic-Studios/rPLauncher/commits?per_page=1`
+        `https://api.github.com/repos/rePublic-Studios/rPLauncher/commits?per_page=1`,
+        {
+          headers: {
+            Authorization: `token ${process.env.GH_ACCESS_TOKEN_RELEASES}`
+          }
+        }
       );
       const { html_url: commitUrl, commit } = commitList[0];
       return commit.message.replace('\n', ` [${commitUrl}]\n`);
     };
-
     const { data: newRelease } = await axios.default.post(
       'https://api.github.com/repos/rePublic-Studios/rPLauncher/releases',
       {
@@ -52,7 +61,7 @@ const main = async () => {
         name: `v${version}`,
         draft: true,
         prerelease: version.includes('beta'),
-        body: getChangeLog()
+        body: await getChangeLog()
       },
       {
         headers: {

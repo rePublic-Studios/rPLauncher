@@ -46,7 +46,6 @@ const LoginButton = styled(Button)`
 
 const Container = styled.div`
   height: 100%;
-  overflow: hidden;
 `;
 
 const LeftSide = styled.div`
@@ -126,21 +125,6 @@ const FooterLinks = styled.div`
 
 const StyledButton = styled(Button)`
   width: 40%;
-`;
-
-const Loading = styled.div`
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  z-index: -1;
-  justify-content: center;
-  backdrop-filter: blur(8px) brightness(60%);
-  font-size: 40px;
-  transition: 0.3s ease-in-out;
-  opacity: ${({ transitionState }) =>
-    transitionState === 'entering' || transitionState === 'entered' ? 1 : 0};
 `;
 
 const LoginFailMessage = styled.div`
@@ -589,7 +573,6 @@ const Login = () => {
               <source src={backgroundVideo} type="video/webm" />
             </video>
           </Background>
-          <Loading transitionState={transitionState}>Loading...</Loading>
         </Container>
       )}
     </Transition>

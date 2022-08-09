@@ -227,12 +227,11 @@ export const downloadFile = async (fileName, url, onProgress) => {
   await makeDir(path.dirname(fileName));
 
   const encodedUrl = getUri(url);
-
   const { data, headers } = await axios.get(encodedUrl, {
     responseType: 'stream',
     responseEncoding: null,
-    adapter,
-    timeout: 60000 * 20
+    adapter /* ,
+    timeout: 60000 * 20 */
   });
 
   const out = fss.createWriteStream(fileName, { encoding: null });

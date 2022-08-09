@@ -20,6 +20,8 @@ module.exports = () => {
         [
           '@babel/preset-env',
           {
+            loose: true,
+            shippedProposals: true,
             targets: {
               node: '14'
             }
@@ -29,6 +31,8 @@ module.exports = () => {
       ],
       plugins: [
         '@babel/plugin-proposal-class-properties',
+        '@babel/plugin-proposal-private-methods',
+        '@babel/plugin-proposal-private-property-in-object',
         '@babel/plugin-proposal-export-default-from',
         '@babel/plugin-transform-runtime',
         '@babel/plugin-syntax-dynamic-import',
@@ -38,7 +42,8 @@ module.exports = () => {
           'babel-plugin-styled-components',
           {
             ssr: true,
-            pure: true
+            pure: true,
+            loose: true
           }
         ]
       ]

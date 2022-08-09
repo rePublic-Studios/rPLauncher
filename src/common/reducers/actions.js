@@ -1,7 +1,7 @@
 import axios from 'axios';
 import path from 'path';
 import { ipcRenderer } from 'electron';
-import { v5 as uuidv5, v4 as uuidv4 } from 'uuid';
+import { v5 as uuid } from 'uuid';
 import { machineId } from 'node-machine-id';
 import fse, { remove } from 'fs-extra';
 import coerce from 'semver/functions/coerce';
@@ -14,6 +14,7 @@ import omitBy from 'lodash/omitBy';
 import { pipeline } from 'stream';
 import he from 'he';
 import zlib from 'zlib';
+import crypto from 'crypto';
 import lockfile from 'lockfile';
 import omit from 'lodash/omit';
 import Seven from 'node-7z';
@@ -576,10 +577,21 @@ export function localLogin(username, redirect = true) {
     if (!username) {
       throw new Error('No username provided');
     }
+    const md5Bytes = crypto
+      .createHash('md5')
+      .update(`OfflinePlayer:${username}`)
+      .digest();
+    /* eslint-disable no-bitwise */
+    md5Bytes[6] &= 0x0f; /* clear version        */
+    md5Bytes[6] |= 0x30; /* set to version 3     */
+    md5Bytes[8] &= 0x3f; /* clear variant        */
+    md5Bytes[8] |= 0x80; /* set to IETF variant  */
+    /* eslint-enable no-bitwise */
+    const generatedID = md5Bytes.toString('hex');
     try {
       const data = {
         selectedProfile: {
-          id: uuidv4(),
+          id: generatedID,
           name: username
         },
         accountType: ACCOUNT_LOCAL
@@ -1116,7 +1128,7 @@ export function checkClientToken() {
     if (clientToken) return clientToken;
     const MY_NAMESPACE = '1dfd2800-790c-11ea-a17c-e930c253ce6b';
     const machineUuid = await machineId();
-    const newToken = uuidv5(machineUuid, MY_NAMESPACE);
+    const newToken = uuid(machineUuid, MY_NAMESPACE);
     dispatch({
       type: ActionTypes.UPDATE_CLIENT_TOKEN,
       clientToken: newToken
@@ -3674,7 +3686,8 @@ export function launchInstance(instanceName, forceQuit = false) {
       ),
       {
         cwd: instancePath,
-        shell: process.platform !== 'win32'
+        shell: process.platform !== 'win32',
+        detached: true
       }
     );
 
@@ -4138,7 +4151,7 @@ export const isNewVersionAvailable = async () => {
 
   try {
     const rChannel = await fs.readFile(
-      path.join(appData, 'rplauncher', 'rChannel')
+      path.join(appData, 'rplauncher_next', 'rChannel')
     );
     releaseChannel = parseInt(rChannel.toString(), 10);
   } catch {

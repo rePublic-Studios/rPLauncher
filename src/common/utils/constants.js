@@ -15,6 +15,7 @@ export const JAVA_LATEST_MANIFEST_URL =
 export const MAVEN_REPO = 'http://central.maven.org/maven2';
 export const MC_LIBRARIES_URL = 'https://libraries.minecraft.net';
 export const FORGESVC_URL = 'https://api.curseforge.com/v1';
+export const FORGESVC_URL_ALTERNATE = 'https://api.tribbe.dev/rplauncher/cf';
 export const FTB_API_URL = 'https://api.modpacks.ch/public';
 export const FTB_MODPACK_URL = 'https://feed-the-beast.com/modpack';
 export const MODRINTH_API_URL = 'https://api.modrinth.com/v2';

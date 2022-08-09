@@ -218,7 +218,7 @@ const General = () => {
   const changeDataPath = async () => {
     setLoadingMoveUserData(true);
     const appData = await ipcRenderer.invoke('getAppdataPath');
-    const appDataPath = path.join(appData, 'rplauncher');
+    const appDataPath = path.join(appData, 'rplauncher_next');
 
     const notCopiedFiles = [
       'Cache',
@@ -487,7 +487,7 @@ const General = () => {
           `}
           onClick={async () => {
             const appData = await ipcRenderer.invoke('getAppdataPath');
-            const appDataPath = path.join(appData, 'rplauncher');
+            const appDataPath = path.join(appData, 'rplauncher_next');
             setDataPath(appDataPath);
           }}
         >
