@@ -83,26 +83,26 @@ module.exports = () => {
             }
           }
         };
-        // if (process.env.SOURCE_MAPS_UPLOAD) {
-        //   webpackConfig.plugins.push(
-        //     new SentryCliPlugin({
-        //       include: [
-        //         './build/electron.js',
-        //         './build/electron.js.map',
-        //         './build/static/js/*'
-        //       ],
-        //       ignore: ['native'],
-        //       org: 'rplauncher',
-        //       project: 'react',
-        //       authToken: process.env.SENTRY_AUTH,
-        //       url: process.env.SOURCE_MAPS_UPLOAD,
-        //       release: packageJson.version,
-        //       dist: `${process.env.REACT_APP_RELEASE_TYPE}-${os.platform()}`
-        //     })
-        //   );
-        // } else {
-        //   console.log('Not a release. Skipping source maps upload.');
-        // }
+        if (process.env.SOURCE_MAPS_UPLOAD) {
+          webpackConfig.plugins.push(
+            new SentryCliPlugin({
+              include: [
+                './build/electron.js',
+                './build/electron.js.map',
+                './build/static/js/*'
+              ],
+              ignore: ['native'],
+              org: 'rplauncher',
+              project: 'react',
+              authToken: process.env.SENTRY_AUTH,
+              url: process.env.SOURCE_MAPS_UPLOAD,
+              release: packageJson.version,
+              dist: `${process.env.REACT_APP_RELEASE_TYPE}-${os.platform()}`
+            })
+          );
+        } else {
+          console.log('Not a release. Skipping source maps upload.');
+        }
 
         webpackConfig.resolve.aliasFields = [];
         webpackConfig.resolve.mainFields = ['module', 'main'];
