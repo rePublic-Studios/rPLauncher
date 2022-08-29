@@ -9,9 +9,9 @@
 /* eslint-disable no-param-reassign */
 
 const CracoAntDesignPlugin = require('craco-antd');
-// const SentryCliPlugin = require('@sentry/webpack-plugin');
-// const os = require('os');
-// const packageJson = require('./package.json');
+const SentryCliPlugin = require('@sentry/webpack-plugin');
+const os = require('os');
+const packageJson = require('./package.json');
 
 module.exports = () => {
   return {
