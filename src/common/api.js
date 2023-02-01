@@ -8,7 +8,6 @@ import {
   MOJANG_APIS,
   ELYBY_APIS,
   FORGESVC_URL,
-  MC_MANIFEST_URL,
   FABRIC_APIS,
   JAVA_MANIFEST_URL,
   IMGUR_CLIENT_ID,
@@ -20,7 +19,7 @@ import {
   MODRINTH_API_URL,
   JAVA_LATEST_MANIFEST_URL
 } from './utils/constants';
-import { sortByDate } from './utils';
+import { sortByDate, getMcManifestUrl } from './utils';
 import ga from './utils/analytics';
 import { downloadFile } from '../app/desktop/utils/downloader';
 // eslint-disable-next-line import/no-cycle
@@ -283,7 +282,7 @@ export const mcElyByInvalidate = (accessToken, clientToken) => {
 };
 
 export const getMcManifest = () => {
-  const url = `${MC_MANIFEST_URL}?timestamp=${new Date().getTime()}`;
+  const url = `${getMcManifestUrl()}?timestamp=${new Date().getTime()}`;
   return axios.get(url);
 };
 

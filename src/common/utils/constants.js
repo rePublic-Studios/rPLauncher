@@ -1,7 +1,5 @@
 export const RP_API_URL = 'https://api.tribbe.dev/rplauncher';
-export const MC_MANIFEST_URL =
-  'https://launchermeta.mojang.com/mc/game/version_manifest.json';
-export const MC_RESOURCES_URL = 'http://resources.download.minecraft.net';
+export const MC_RESOURCES_URL = 'https://resources.download.minecraft.net';
 export const FABRIC_APIS = 'https://meta.fabricmc.net/v2';
 export const RPL_LEGACYJAVAFIXER_MOD_URL =
   'https://cdn.tribbe.dev/rplauncher/legacyjavafixer-1.0.jar';

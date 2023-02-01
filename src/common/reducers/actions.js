@@ -309,7 +309,7 @@ export function initNews() {
           parser.parse(newsXml)?.rss?.channel?.item?.map(newsEntry => ({
             title: newsEntry.title,
             description: newsEntry.description,
-            image: `https://minecraft.net${newsEntry.imageURL}`,
+            image: `https://www.minecraft.net${newsEntry.imageURL}`,
             url: newsEntry.link,
             guid: newsEntry.guid
           })) || [];
@@ -596,11 +596,14 @@ export function localLogin(username, redirect = true) {
         },
         accountType: ACCOUNT_LOCAL
       };
-
-      const playerProfile = await mojangApiProfilesUrl(username);
-      if (playerProfile.status !== 204) {
-        data.selectedProfile = playerProfile.data;
-      } // else todo set random valid mojang uuid
+      try {
+        const playerProfile = await mojangApiProfilesUrl(username);
+        if (playerProfile.status !== 204) {
+          data.selectedProfile = playerProfile.data;
+        } // else todo set random valid mojang uuid
+      } catch (error) {
+        console.error(error);
+      }
 
       data.skin = await mojangPlayerSkinService(data.selectedProfile.id);
       dispatch(updateAccount(data.selectedProfile.id, data));
@@ -1338,6 +1341,7 @@ export function updateInstanceConfig(
         if (readBuff.every(v => v === 0)) {
           throw new Error('Corrupted file');
         }
+        newFile.close();
         await fs.rename(tempP, p);
       };
 
@@ -2602,6 +2606,7 @@ export function downloadInstance(instanceName) {
 
       await dispatch(removeDownloadFromQueue(instanceName));
       dispatch(addNextInstanceToCurrentDownload());
+      await remove(tempInstancePath);
     } catch (err) {
       console.error(err);
       // Show error modal and decide what to do
@@ -2613,8 +2618,6 @@ export function downloadInstance(instanceName) {
           isUpdate
         })
       );
-    } finally {
-      await remove(tempInstancePath);
     }
   };
 }
@@ -3140,12 +3143,15 @@ export const startListener = () => {
             !changesTracker[completePath].completed &&
             (event.action === 2 || event.action === 0 || event.action === 1)
           ) {
+            let filehandle;
             try {
               await new Promise(resolve => setTimeout(resolve, 300));
-              await fs.open(completePath, 'r+');
+              filehandle = await fs.open(completePath, 'r+');
               changesTracker[completePath].completed = true;
             } catch {
               // Do nothing, simply not completed..
+            } finally {
+              await filehandle?.close();
             }
           }
         })
@@ -4295,6 +4301,7 @@ export const checkForPortableUpdates = () => {
                   if (err) {
                     reject(err);
                   }
+                  destination.close();
                   resolve();
                 });
               });
